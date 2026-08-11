@@ -1,0 +1,27 @@
+{
+  "name": "kumusha-client",
+  "description": "Next.js frontend for Kumusha, a stay explorer demonstrating MongoDB CRUD, aggregation, geospatial and search operations on the sample_airbnb dataset",
+  "license": "Apache-2.0",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build --turbopack",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "next": "^16.1.6",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "^16.1.6",
+    "typescript": "^5"
+  }
+}

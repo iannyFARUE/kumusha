@@ -3,10 +3,12 @@ package com.kumusha.exception;
 import com.kumusha.model.response.ErrorResponse;
 import com.mongodb.MongoWriteException;
 import java.time.Instant;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -49,6 +51,36 @@ public class GlobalExceptionHandler {
                 .message("Validation failed")
                 .error(ErrorResponse.ErrorDetails.builder()
                         .message(ex.getMessage())
+                        .code("VALIDATION_ERROR")
+                        .build())
+                .timestamp(Instant.now().toString())
+                .build();
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Handles bean validation failures on {@code @Valid} request bodies.
+     *
+     * <p>Without this handler a malformed request body would fall through to the catch-all
+     * below and be reported as a 500, hiding a plain client mistake behind a server error.
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValid(
+            MethodArgumentNotValidException ex, WebRequest request) {
+
+        String details = ex.getBindingResult().getFieldErrors().stream()
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .collect(Collectors.joining("; "));
+
+        String message = details.isEmpty() ? "Request body is invalid" : details;
+
+        logger.error("Validation error: {}", message);
+
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .message("Validation failed")
+                .error(ErrorResponse.ErrorDetails.builder()
+                        .message(message)
                         .code("VALIDATION_ERROR")
                         .build())
                 .timestamp(Instant.now().toString())
