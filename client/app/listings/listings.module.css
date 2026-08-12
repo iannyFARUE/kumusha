@@ -1,0 +1,464 @@
+/**
+ * Listings page styles
+ */
+
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.pageTitle {
+  margin: 0;
+  font-size: 2.25rem;
+  color: var(--kumusha-charcoal);
+  font-weight: 700;
+}
+
+.loadingNote {
+  margin: 0 0 1.5rem 0;
+  color: var(--color-text-secondary);
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.searchControls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.searchButton {
+  padding: 0.8rem 1.6rem;
+  background: var(--kumusha-cream);
+  color: var(--kumusha-clay);
+  border: 2px solid var(--kumusha-clay);
+  border-radius: var(--radius-lg);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  min-width: 150px;
+  box-shadow: var(--shadow-sm);
+}
+
+.searchButton:hover:not(:disabled) {
+  background: var(--kumusha-clay);
+  color: var(--kumusha-cream);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(180, 84, 58, 0.3);
+}
+
+.searchButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.clearSearchButton {
+  padding: 0.6rem 1.2rem;
+  background: var(--kumusha-cream);
+  color: var(--color-text-secondary);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.clearSearchButton:hover {
+  border-color: var(--color-text-secondary);
+  transform: translateY(-1px);
+}
+
+.addButton {
+  padding: 0.8rem 1.6rem;
+  background: var(--kumusha-clay);
+  color: var(--kumusha-cream);
+  border: none;
+  border-radius: var(--radius-lg);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  min-width: 150px;
+  box-shadow: var(--shadow-sm);
+}
+
+.addButton:hover:not(:disabled) {
+  background: var(--kumusha-clay-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(180, 84, 58, 0.3);
+}
+
+.addButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.successMessage {
+  background: rgba(47, 93, 80, 0.1);
+  border: 2px solid var(--kumusha-moss);
+  color: #1F4034;
+  padding: 1.1rem;
+  border-radius: var(--radius-lg);
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-weight: 600;
+}
+
+.errorMessage {
+  background: #FDF3F2;
+  border: 2px solid var(--color-error);
+  color: #7F2A20;
+  padding: 1.1rem;
+  border-radius: var(--radius-lg);
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-weight: 600;
+}
+
+.listingsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+  width: 100%;
+}
+
+.noListings {
+  text-align: center;
+  padding: 3rem;
+  color: var(--color-text-secondary);
+  font-size: 1.05rem;
+  font-weight: 500;
+}
+
+/* Search result pagination */
+.pagination {
+  margin: 3rem 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.paginationContainer {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.pageButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0.75rem;
+  background: transparent;
+  color: var(--kumusha-clay);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: all var(--transition-base);
+  cursor: pointer;
+}
+
+.pageButton:hover:not(.disabled):not(:disabled) {
+  color: var(--kumusha-clay-dark);
+  background: rgba(180, 84, 58, 0.05);
+}
+
+.pageButton.disabled,
+.pageButton:disabled {
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.pageInfo {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--kumusha-charcoal);
+  padding: 0.5rem 1rem;
+}
+
+.additionalInfo {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  text-align: center;
+  font-weight: 500;
+}
+
+.searchInfo {
+  margin: 2rem 0;
+  padding: 1.1rem;
+  background: var(--kumusha-sand);
+  border: 2px solid var(--kumusha-clay);
+  border-radius: var(--radius-lg);
+  text-align: center;
+  font-size: 0.95rem;
+  color: var(--kumusha-charcoal);
+  font-weight: 500;
+}
+
+/* Confirmation dialog */
+.confirmationOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(36, 28, 24, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  backdrop-filter: blur(4px);
+}
+
+.confirmationDialog {
+  background: var(--kumusha-cream);
+  border-radius: var(--radius-xl);
+  padding: 2.25rem;
+  max-width: 440px;
+  width: 100%;
+  box-shadow: var(--shadow-xl);
+  border: 2px solid var(--kumusha-clay);
+}
+
+.confirmationTitle {
+  margin: 0 0 1rem 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--kumusha-charcoal);
+  text-align: center;
+}
+
+.confirmationMessage {
+  margin: 0 0 1.75rem 0;
+  color: var(--color-text-secondary);
+  text-align: center;
+  line-height: 1.6;
+}
+
+.confirmationActions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.cancelButton {
+  padding: 0.8rem 1.6rem;
+  background: var(--kumusha-cream);
+  color: var(--color-text-secondary);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  min-width: 120px;
+}
+
+.cancelButton:hover {
+  border-color: var(--color-text-secondary);
+  transform: translateY(-1px);
+}
+
+.confirmDeleteButton {
+  padding: 0.8rem 1.6rem;
+  background: var(--color-error);
+  color: var(--kumusha-cream);
+  border: 2px solid var(--color-error);
+  border-radius: var(--radius-lg);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  min-width: 120px;
+}
+
+.confirmDeleteButton:hover:not(:disabled) {
+  background: #9B2C20;
+  border-color: #9B2C20;
+  transform: translateY(-1px);
+}
+
+.confirmDeleteButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Floating selection bar */
+.selectionBar {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 700px;
+  width: calc(100% - 2rem);
+  background: var(--kumusha-cream);
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+  box-shadow: 0 8px 24px rgba(36, 28, 24, 0.15);
+  z-index: 100;
+  padding: 1rem 1.5rem;
+  animation: floatUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes floatUp {
+  from {
+    transform: translateX(-50%) translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+}
+
+.selectionBarContent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.selectionInfo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  white-space: nowrap;
+}
+
+.selectionCount {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--kumusha-charcoal);
+}
+
+.deselectAllButton {
+  background: transparent;
+  color: var(--kumusha-clay);
+  border: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.selectionActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.editSelectedButton {
+  padding: 0.6rem 1.2rem;
+  background: var(--kumusha-cream);
+  color: var(--kumusha-clay);
+  border: 2px solid var(--kumusha-clay);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.editSelectedButton:hover:not(:disabled) {
+  background: var(--kumusha-clay);
+  color: var(--kumusha-cream);
+}
+
+.deleteSelectedButton {
+  padding: 0.6rem 1.2rem;
+  background: var(--kumusha-cream);
+  color: var(--color-error);
+  border: 2px solid var(--color-error);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.deleteSelectedButton:hover:not(:disabled) {
+  background: var(--color-error);
+  color: var(--kumusha-cream);
+}
+
+.editSelectedButton:disabled,
+.deleteSelectedButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .pageHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .headerActions {
+    flex-direction: column;
+  }
+
+  .searchControls {
+    width: 100%;
+  }
+
+  .pageTitle {
+    font-size: 1.75rem;
+    text-align: center;
+  }
+
+  .addButton,
+  .searchButton,
+  .clearSearchButton {
+    width: 100%;
+  }
+
+  .selectionBarContent {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .selectionActions {
+    justify-content: stretch;
+  }
+
+  .editSelectedButton,
+  .deleteSelectedButton {
+    flex: 1;
+  }
+
+  .confirmationActions {
+    flex-direction: column;
+  }
+
+  .cancelButton,
+  .confirmDeleteButton {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .listingsGrid {
+    grid-template-columns: 1fr;
+  }
+}

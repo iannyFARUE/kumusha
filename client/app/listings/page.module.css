@@ -1,0 +1,26 @@
+/**
+ * Listings page layout
+ */
+
+.page {
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+.main {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .page {
+    padding: 0.75rem;
+  }
+}

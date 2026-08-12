@@ -1,0 +1,72 @@
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: 2rem;
+}
+
+.errorCard {
+  background: var(--kumusha-cream);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: 2.5rem;
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+}
+
+.title {
+  margin: 0 0 0.75rem 0;
+  font-size: 1.5rem;
+  color: var(--kumusha-charcoal);
+}
+
+.description {
+  margin: 0 0 1.75rem 0;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.buttonContainer {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.retryButton {
+  padding: 0.7rem 1.5rem;
+  background: var(--kumusha-clay);
+  color: var(--kumusha-cream);
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition-base);
+}
+
+.retryButton:hover {
+  background: var(--kumusha-clay-dark);
+}
+
+.backLink {
+  padding: 0.7rem 1.5rem;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  transition: border-color var(--transition-base);
+}
+
+.backLink:hover {
+  border-color: var(--kumusha-clay);
+}
+
+.errorId {
+  margin: 1.5rem 0 0 0;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}

@@ -20,6 +20,8 @@ interface ListingCardProps {
   isSelected?: boolean;
   onSelectionChange?: (listingId: string, isSelected: boolean) => void;
   showCheckbox?: boolean;
+  /** Distance from the query point, shown only for proximity search results */
+  distanceLabel?: string;
 }
 
 export default function ListingCard({
@@ -27,6 +29,7 @@ export default function ListingCard({
   isSelected = false,
   onSelectionChange,
   showCheckbox = false,
+  distanceLabel,
 }: ListingCardProps) {
   const pictureUrl = listing.images?.pictureUrl;
   const capacity = formatCapacity(listing.accommodates, listing.bedrooms);
@@ -68,6 +71,8 @@ export default function ListingCard({
         <h3 className={styles.name}>{listing.name}</h3>
 
         {listing.address?.market && <p className={styles.market}>{listing.address.market}</p>}
+
+        {distanceLabel && <p className={styles.distance}>{distanceLabel}</p>}
 
         {listing.score !== undefined && (
           <p className={styles.score}>Similarity {listing.score.toFixed(4)}</p>

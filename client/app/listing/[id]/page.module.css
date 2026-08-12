@@ -1,0 +1,279 @@
+/**
+ * Listing detail page styles
+ */
+
+.page {
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+.main {
+  max-width: 1100px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.backLink {
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+  color: var(--kumusha-clay);
+}
+
+.successMessage {
+  background: rgba(47, 93, 80, 0.1);
+  border: 2px solid var(--kumusha-moss);
+  color: #1F4034;
+  padding: 1rem;
+  border-radius: var(--radius-lg);
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.errorMessage {
+  background: #FDF3F2;
+  border: 2px solid var(--color-error);
+  color: #7F2A20;
+  padding: 1rem;
+  border-radius: var(--radius-lg);
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.listingDetails {
+  display: grid;
+  grid-template-columns: minmax(280px, 420px) 1fr;
+  gap: 2.5rem;
+  align-items: start;
+}
+
+.photoSection {
+  position: sticky;
+  top: 100px;
+}
+
+.photoContainer {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--kumusha-sand);
+  box-shadow: var(--shadow-md);
+}
+
+.photoImage {
+  object-fit: cover;
+}
+
+.photoPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: var(--kumusha-sand);
+  border-radius: var(--radius-lg);
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.priceCard {
+  margin-top: 1.25rem;
+  padding: 1.25rem;
+  background: var(--kumusha-sand);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.priceValue {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--kumusha-clay);
+  margin-bottom: 0.35rem;
+}
+
+.priceMeta {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+.title {
+  margin: 0 0 0.35rem 0;
+  font-size: 2.1rem;
+  font-weight: 700;
+  color: var(--kumusha-charcoal);
+  line-height: 1.2;
+}
+
+.subtitle {
+  margin: 0 0 1.5rem 0;
+  color: var(--color-text-secondary);
+  font-size: 1rem;
+}
+
+.basicInfo,
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.65rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.infoItem {
+  font-size: 0.92rem;
+  color: var(--color-text-secondary);
+}
+
+.infoItem strong {
+  color: var(--kumusha-charcoal);
+}
+
+.section {
+  padding-top: 1.5rem;
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.sectionTitle {
+  margin: 0 0 0.75rem 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--kumusha-charcoal);
+}
+
+.sectionNote {
+  margin: -0.35rem 0 1rem 0;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.prose {
+  margin: 0 0 0.75rem 0;
+  line-height: 1.75;
+  color: var(--color-text-secondary);
+  white-space: pre-line;
+}
+
+.overallScore {
+  margin: 0 0 1rem 0;
+  font-weight: 700;
+  color: var(--kumusha-clay);
+}
+
+.scoreGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.75rem;
+}
+
+.scoreCard {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0.75rem;
+  background: var(--kumusha-sand);
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+}
+
+.scoreValue {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--kumusha-charcoal);
+  margin-top: 0.25rem;
+}
+
+.tagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tag {
+  background: var(--kumusha-sand);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 0.3rem 0.85rem;
+  font-size: 0.82rem;
+  color: var(--color-text-secondary);
+}
+
+.reviewList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.review {
+  border-left: 3px solid var(--kumusha-ochre);
+  padding-left: 1rem;
+}
+
+.reviewBody {
+  margin: 0 0 0.35rem 0;
+  line-height: 1.65;
+  color: var(--color-text-secondary);
+}
+
+.reviewMeta {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.similarButton {
+  padding: 0.65rem 1.4rem;
+  background: var(--kumusha-cream);
+  color: var(--kumusha-moss);
+  border: 2px solid var(--kumusha-moss);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.similarButton:hover:not(:disabled) {
+  background: var(--kumusha-moss);
+  color: var(--kumusha-cream);
+}
+
+.similarButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.similarError {
+  margin: 0.85rem 0 0 0;
+  font-size: 0.88rem;
+  color: var(--color-warning);
+}
+
+.similarGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.25rem;
+  margin-top: 1.25rem;
+}
+
+@media (max-width: 900px) {
+  .listingDetails {
+    grid-template-columns: 1fr;
+  }
+
+  .photoSection {
+    position: static;
+  }
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: 1rem;
+  }
+
+  .title {
+    font-size: 1.6rem;
+  }
+}

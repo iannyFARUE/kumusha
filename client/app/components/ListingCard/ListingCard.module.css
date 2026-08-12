@@ -121,6 +121,15 @@
   font-weight: 500;
 }
 
+.distance {
+  margin: 0 0 8px 0;
+  color: var(--kumusha-ochre);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
 .score {
   margin: 0 0 8px 0;
   color: var(--kumusha-moss);

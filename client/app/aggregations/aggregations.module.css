@@ -1,0 +1,138 @@
+/**
+ * Insights page styles
+ */
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.title {
+  margin: 0 0 0.5rem 0;
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: var(--kumusha-charcoal);
+}
+
+.subtitle {
+  margin: 0 0 2.5rem 0;
+  color: var(--color-text-secondary);
+  font-size: 1rem;
+  line-height: 1.7;
+  max-width: 760px;
+}
+
+.section {
+  margin-bottom: 3rem;
+}
+
+.sectionTitle {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--kumusha-charcoal);
+}
+
+.sectionNote {
+  margin: 0 0 1.25rem 0;
+  font-size: 0.88rem;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  max-width: 760px;
+}
+
+.tableContainer {
+  /* Wide tables scroll inside their own container instead of the page */
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--kumusha-cream);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  min-width: 640px;
+}
+
+.table thead {
+  background: var(--kumusha-charcoal);
+}
+
+.table th {
+  text-align: left;
+  padding: 0.85rem 1rem;
+  color: var(--kumusha-sand);
+  font-weight: 600;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 0.85rem 1rem;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  vertical-align: top;
+}
+
+.table tbody tr:nth-child(even) {
+  background: rgba(246, 239, 231, 0.5);
+}
+
+.primaryCell {
+  font-weight: 600;
+  color: var(--kumusha-charcoal);
+}
+
+.rank {
+  font-weight: 700;
+  color: var(--kumusha-clay);
+  white-space: nowrap;
+}
+
+.reviewsCell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-width: 260px;
+}
+
+.review {
+  border-left: 3px solid var(--kumusha-ochre);
+  padding-left: 0.65rem;
+}
+
+.reviewText {
+  font-style: italic;
+  line-height: 1.5;
+}
+
+.reviewMeta {
+  font-size: 0.76rem;
+  color: var(--color-text-muted);
+  margin-top: 0.2rem;
+  font-weight: 600;
+}
+
+.error {
+  background: #FDF3F2;
+  border: 2px solid var(--color-error);
+  color: #7F2A20;
+  padding: 1.1rem;
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1.25rem;
+  }
+
+  .title {
+    font-size: 1.75rem;
+  }
+}
