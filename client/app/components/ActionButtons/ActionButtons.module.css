@@ -1,0 +1,47 @@
+.actionButtons {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.button {
+  padding: 0.7rem 1.5rem;
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.editButton {
+  background: var(--kumusha-clay);
+  color: var(--kumusha-cream);
+  border: 2px solid var(--kumusha-clay);
+}
+
+.editButton:hover:not(:disabled) {
+  background: var(--kumusha-clay-dark);
+  border-color: var(--kumusha-clay-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.deleteButton {
+  background: var(--kumusha-cream);
+  color: var(--color-error);
+  border: 2px solid var(--color-error);
+}
+
+.deleteButton:hover:not(:disabled) {
+  background: var(--color-error);
+  color: var(--kumusha-cream);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}

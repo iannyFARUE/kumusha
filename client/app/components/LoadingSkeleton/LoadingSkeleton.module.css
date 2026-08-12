@@ -1,0 +1,140 @@
+/**
+ * Loading skeleton styles
+ */
+
+.skeletonText,
+.skeletonTitle,
+.skeletonLargeTitle,
+.skeletonButton,
+.skeletonCard,
+.skeletonInput {
+  background: linear-gradient(
+    90deg,
+    var(--kumusha-sand) 25%,
+    #EFE4D8 50%,
+    var(--kumusha-sand) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: var(--radius-sm);
+}
+
+.skeletonText {
+  height: 14px;
+  margin-bottom: 8px;
+  width: 100%;
+}
+
+.skeletonTitle {
+  height: 20px;
+  margin-bottom: 10px;
+  width: 60%;
+}
+
+.skeletonLargeTitle {
+  height: 34px;
+  margin-bottom: 16px;
+  width: 70%;
+}
+
+.skeletonButton {
+  height: 40px;
+  border-radius: var(--radius-md);
+  width: 100%;
+}
+
+.skeletonInput {
+  height: 36px;
+  border-radius: var(--radius-md);
+}
+
+.skeletonCard {
+  height: 220px;
+  border-radius: var(--radius-md);
+  width: 100%;
+}
+
+.sizeSmall { width: 30%; }
+.sizeMedium { width: 55%; }
+.sizeLarge { width: 80%; }
+.sizeFull { width: 100%; }
+.sizeHalf { width: 50%; }
+
+.listingCardSkeleton {
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  background: var(--kumusha-cream);
+  display: flex;
+  flex-direction: column;
+}
+
+.photoSkeleton {
+  margin-bottom: 16px;
+}
+
+.infoSkeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pageSelectorSkeleton {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.paginationSkeleton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  margin: 3rem 0;
+}
+
+.scoreCardSkeleton {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 1.5rem;
+}
+
+.row {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.scoreGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 1.5rem;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeletonText,
+  .skeletonTitle,
+  .skeletonLargeTitle,
+  .skeletonButton,
+  .skeletonCard,
+  .skeletonInput {
+    animation: none;
+  }
+}

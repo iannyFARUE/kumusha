@@ -1,0 +1,29 @@
+.pageSizeSelector {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.select {
+  padding: 0.5rem 0.75rem;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--kumusha-cream);
+  color: var(--kumusha-charcoal);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color var(--transition-base);
+}
+
+.select:hover,
+.select:focus {
+  border-color: var(--kumusha-clay);
+}

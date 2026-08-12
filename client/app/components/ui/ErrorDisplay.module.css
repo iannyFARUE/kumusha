@@ -1,0 +1,35 @@
+.errorDisplay {
+  text-align: center;
+  padding: 2rem;
+  border: 1px solid #F3D6D2;
+  border-radius: var(--radius-md);
+  background-color: #FDF3F2;
+  color: #7F2A20;
+}
+
+.title {
+  margin: 0 0 1rem 0;
+  color: var(--color-error);
+  font-size: 1.25rem;
+}
+
+.message {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.retryButton {
+  margin-top: 1rem;
+  padding: 0.5rem 1.25rem;
+  background: var(--color-error);
+  color: var(--kumusha-cream);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-weight: 600;
+  transition: background var(--transition-base);
+}
+
+.retryButton:hover {
+  background: #9B2C20;
+}
