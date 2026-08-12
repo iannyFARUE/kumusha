@@ -1,0 +1,259 @@
+/**
+ * Shared form styles
+ *
+ * The add, edit, batch-edit and search surfaces are visually identical panels, so they share
+ * one stylesheet rather than repeating the same rules in four CSS modules.
+ */
+
+.formContainer {
+  background: var(--kumusha-cream);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: var(--shadow-md);
+}
+
+.formTitle {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--kumusha-charcoal);
+}
+
+.formSubtitle {
+  margin: 0 0 1.5rem 0;
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+}
+
+.entry {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+  background: var(--kumusha-sand);
+}
+
+.entryHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.entryTitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--kumusha-charcoal);
+}
+
+.removeEntryButton {
+  background: transparent;
+  border: none;
+  color: var(--color-error);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.fieldGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.fieldWide {
+  grid-column: 1 / -1;
+}
+
+.label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.hint {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+}
+
+.input,
+.select,
+.textarea {
+  padding: 0.6rem 0.75rem;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--kumusha-cream);
+  color: var(--kumusha-charcoal);
+  font-size: 0.9rem;
+  font-family: inherit;
+  width: 100%;
+  transition: border-color var(--transition-base);
+}
+
+.textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  border-color: var(--kumusha-clay);
+}
+
+.input:disabled,
+.select:disabled,
+.textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.checkboxField {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.formError {
+  background: #FDF3F2;
+  border: 2px solid var(--color-error);
+  color: #7F2A20;
+  padding: 0.9rem 1.1rem;
+  border-radius: var(--radius-md);
+  margin-bottom: 1.25rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.formActions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin-top: 1.5rem;
+}
+
+.addEntryButton {
+  padding: 0.55rem 1.2rem;
+  background: transparent;
+  color: var(--kumusha-moss);
+  border: 2px dashed var(--kumusha-moss);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  margin-right: auto;
+}
+
+.addEntryButton:hover:not(:disabled) {
+  background: rgba(47, 93, 80, 0.08);
+}
+
+.primaryButton {
+  padding: 0.7rem 1.6rem;
+  background: var(--kumusha-clay);
+  color: var(--kumusha-cream);
+  border: 2px solid var(--kumusha-clay);
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.primaryButton:hover:not(:disabled) {
+  background: var(--kumusha-clay-dark);
+  border-color: var(--kumusha-clay-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.secondaryButton {
+  padding: 0.7rem 1.6rem;
+  background: var(--kumusha-cream);
+  color: var(--color-text-secondary);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.secondaryButton:hover:not(:disabled) {
+  border-color: var(--color-text-secondary);
+  transform: translateY(-1px);
+}
+
+.primaryButton:disabled,
+.secondaryButton:disabled,
+.addEntryButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.modeToggle {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.modeButton {
+  padding: 0.55rem 1.1rem;
+  background: var(--kumusha-cream);
+  color: var(--color-text-secondary);
+  border: 2px solid var(--color-border);
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.modeButtonActive {
+  background: var(--kumusha-charcoal);
+  color: var(--kumusha-cream);
+  border-color: var(--kumusha-charcoal);
+}
+
+@media (max-width: 480px) {
+  .formContainer {
+    padding: 1.25rem;
+  }
+
+  .fieldGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .formActions {
+    flex-direction: column;
+  }
+
+  .primaryButton,
+  .secondaryButton,
+  .addEntryButton {
+    width: 100%;
+    margin-right: 0;
+  }
+}
