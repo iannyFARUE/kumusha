@@ -4,6 +4,7 @@
 
 # Environment variables
 .env
+.env*.local
 !.env.example
 *.pem
 
@@ -88,7 +89,6 @@ spring-boot-devtools.properties
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
-package-lock.json
 
 # testing
 */coverage

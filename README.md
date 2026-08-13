@@ -14,6 +14,7 @@ to a domain where listings carry coordinates, embedded reviews and rich descript
 ├── README.md
 ├── check-requirements.sh   # Pre-flight checks for Java, Node and configuration
 ├── client/                 # Next.js frontend (TypeScript)
+│   └── .env.example
 └── server/                 # Java Spring Boot backend
     ├── src/
     ├── pom.xml
@@ -120,11 +121,17 @@ In a new terminal:
 
 ```bash
 cd client
-npm install
+cp .env.example .env.local
+npm ci
 npm run dev
 ```
 
 The Next.js application starts on `http://localhost:3000`.
+
+`.env.example` defaults `NEXT_PUBLIC_API_URL` to `http://localhost:3001`, which matches the
+backend's default port, so no edit is needed for local development. Point it at your deployed
+backend when hosting the frontend elsewhere. The `NEXT_PUBLIC_` prefix is required — Next.js only
+exposes prefixed variables to the browser, and the API client runs in client components.
 
 ### 4. Access the Application
 

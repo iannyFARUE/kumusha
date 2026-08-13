@@ -11,7 +11,36 @@ import { AmenityStats, ListingWithReviews, PropertyTypeStats } from '@/types/agg
  * API configuration and helper functions
  */
 
-const API_BASE_URL = process.env.API_URL || 'http://localhost:3001';
+/**
+ * Resolves the backend base URL.
+ *
+ * The NEXT_PUBLIC_ prefix is required: this module is imported by client components, and Next.js
+ * only inlines prefixed variables into the browser bundle. Without it the value is undefined in
+ * the browser and every request silently falls back to localhost.
+ *
+ * Next.js inlines the value at build time, so a production build with the variable unset would
+ * bake the localhost fallback into the shipped bundle and quietly talk to the wrong host. Throwing
+ * here turns that into a build failure instead, while development keeps the localhost default so
+ * `npm run dev` works with no configuration.
+ */
+function resolveApiBaseUrl(): string {
+  const configured = process.env.NEXT_PUBLIC_API_URL;
+
+  if (configured) {
+    return configured;
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'NEXT_PUBLIC_API_URL is not set. A production build must point at a real backend: copy ' +
+        'client/.env.example to client/.env.local and set NEXT_PUBLIC_API_URL before building.',
+    );
+  }
+
+  return 'http://localhost:3001';
+}
+
+const API_BASE_URL = resolveApiBaseUrl();
 
 /** Aggregation endpoints scan the whole collection, so they get a generous timeout */
 const AGGREGATION_TIMEOUT_MS = 15000;
