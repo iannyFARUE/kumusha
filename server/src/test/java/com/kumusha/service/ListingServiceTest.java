@@ -33,6 +33,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.IntStream;
 import org.bson.Document;
 import org.bson.types.Decimal128;
 import org.junit.jupiter.api.BeforeEach;
@@ -396,26 +398,41 @@ class ListingServiceTest {
         when(mongoTemplate.updateMulti(queryCaptor.capture(), updateCaptor.capture(), eq(Listing.class)))
                 .thenReturn(updateResult);
 
-        Document filter = new Document("_id", new Document("$in", List.of("a", "b", "c")));
-        Document update = new Document("propertyType", "Apartment");
+        UpdateListingRequest update = UpdateListingRequest.builder()
+                .propertyType("Apartment")
+                .build();
 
-        BatchUpdateResponse result = listingService.updateListingsBatch(filter, update);
+        BatchUpdateResponse result =
+                listingService.updateListingsBatch(List.of("a", "b", "c"), update);
 
         assertEquals(3, result.matchedCount());
         assertEquals(3, result.modifiedCount());
 
         Document set = updateCaptor.getValue().getUpdateObject().get("$set", Document.class);
         assertEquals("Apartment", set.get("property_type"));
-        assertTrue(queryCaptor.getValue().getQueryObject().containsKey("_id"));
+
+        // The query must be built from the ids the caller named, never from caller-supplied criteria
+        Document queryObject = queryCaptor.getValue().getQueryObject();
+        assertEquals(Set.of("_id"), queryObject.keySet());
+        assertEquals(List.of("a", "b", "c"), queryObject.get("_id", Document.class).get("$in"));
     }
 
     @Test
-    @DisplayName("Should reject a batch update with an empty update document")
+    @DisplayName("Should reject a batch update that changes nothing")
     void testUpdateListingsBatch_EmptyUpdate() {
-        Document filter = new Document("propertyType", "House");
-
         assertThrows(ValidationException.class,
-                () -> listingService.updateListingsBatch(filter, new Document()));
+                () -> listingService.updateListingsBatch(List.of("a"), UpdateListingRequest.builder().build()));
+        assertThrows(ValidationException.class,
+                () -> listingService.updateListingsBatch(List.of("a"), null));
+    }
+
+    @Test
+    @DisplayName("Should reject a batch update with no ids")
+    void testUpdateListingsBatch_NoIds() {
+        UpdateListingRequest update = UpdateListingRequest.builder().propertyType("Apartment").build();
+
+        assertThrows(ValidationException.class, () -> listingService.updateListingsBatch(List.of(), update));
+        assertThrows(ValidationException.class, () -> listingService.updateListingsBatch(null, update));
     }
 
     // ==================== DELETE TESTS ====================
@@ -441,22 +458,59 @@ class ListingServiceTest {
     }
 
     @Test
-    @DisplayName("Should refuse to delete with an empty filter")
-    void testDeleteListingsBatch_EmptyFilter() {
-        assertThrows(ValidationException.class, () -> listingService.deleteListingsBatch(new Document()));
+    @DisplayName("Should refuse to delete a batch with no usable ids")
+    void testDeleteListingsBatch_NoIds() {
+        assertThrows(ValidationException.class, () -> listingService.deleteListingsBatch(List.of()));
         assertThrows(ValidationException.class, () -> listingService.deleteListingsBatch(null));
+        // Blank entries are stripped, so a list of them is as empty as a list of none
+        assertThrows(ValidationException.class,
+                () -> listingService.deleteListingsBatch(Arrays.asList("  ", null)));
+
+        verify(mongoTemplate, never()).remove(any(Query.class), eq(Listing.class));
     }
 
     @Test
-    @DisplayName("Should delete listings matching a filter")
+    @DisplayName("Should delete exactly the listings named by id")
     void testDeleteListingsBatch_Success() {
-        when(mongoTemplate.remove(any(Query.class), eq(Listing.class)))
+        ArgumentCaptor<Query> queryCaptor = ArgumentCaptor.forClass(Query.class);
+
+        when(mongoTemplate.remove(queryCaptor.capture(), eq(Listing.class)))
                 .thenReturn(DeleteResult.acknowledged(4));
 
-        DeleteResponse result = listingService.deleteListingsBatch(
-                new Document("propertyType", "Treehouse"));
+        DeleteResponse result = listingService.deleteListingsBatch(List.of("a", "b", "c", "d"));
 
         assertEquals(4L, result.deletedCount());
+
+        // The whole point of the contract: the query can only ever be an _id match on the named
+        // ids, so a caller cannot widen a delete to documents it did not list
+        Document queryObject = queryCaptor.getValue().getQueryObject();
+        assertEquals(Set.of("_id"), queryObject.keySet());
+        assertEquals(List.of("a", "b", "c", "d"), queryObject.get("_id", Document.class).get("$in"));
+    }
+
+    @Test
+    @DisplayName("Should cap how many listings one batch may target")
+    void testDeleteListingsBatch_RejectsOversizedBatch() {
+        List<String> tooMany = IntStream.rangeClosed(1, 101)
+                .mapToObj(String::valueOf)
+                .toList();
+
+        assertThrows(ValidationException.class, () -> listingService.deleteListingsBatch(tooMany));
+        verify(mongoTemplate, never()).remove(any(Query.class), eq(Listing.class));
+    }
+
+    @Test
+    @DisplayName("Should deduplicate ids so a repeated id does not inflate the batch")
+    void testDeleteListingsBatch_DeduplicatesIds() {
+        ArgumentCaptor<Query> queryCaptor = ArgumentCaptor.forClass(Query.class);
+
+        when(mongoTemplate.remove(queryCaptor.capture(), eq(Listing.class)))
+                .thenReturn(DeleteResult.acknowledged(1));
+
+        listingService.deleteListingsBatch(List.of("a", "a", " a ", "b"));
+
+        Document queryObject = queryCaptor.getValue().getQueryObject();
+        assertEquals(List.of("a", "b"), queryObject.get("_id", Document.class).get("$in"));
     }
 
     @Test

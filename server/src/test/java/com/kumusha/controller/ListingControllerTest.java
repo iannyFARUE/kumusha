@@ -3,9 +3,11 @@ package com.kumusha.controller;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -39,7 +41,6 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.bson.Document;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -288,11 +289,11 @@ class ListingControllerTest {
     @Test
     @DisplayName("PATCH /api/listings - Should update listings in batch")
     void testUpdateListingsBatch_Success() throws Exception {
-        when(listingService.updateListingsBatch(any(Document.class), any(Document.class)))
+        when(listingService.updateListingsBatch(anyList(), any(UpdateListingRequest.class)))
                 .thenReturn(new BatchUpdateResponse(3, 3));
 
         Map<String, Object> body = new HashMap<>();
-        body.put("filter", Map.of("_id", Map.of("$in", List.of("a", "b", "c"))));
+        body.put("ids", List.of("a", "b", "c"));
         body.put("update", Map.of("propertyType", "Apartment"));
 
         mockMvc.perform(patch("/api/listings")
@@ -329,16 +330,31 @@ class ListingControllerTest {
     }
 
     @Test
-    @DisplayName("DELETE /api/listings - Should reject an empty batch filter")
-    void testDeleteListingsBatch_EmptyFilter() throws Exception {
-        when(listingService.deleteListingsBatch(any(Document.class)))
-                .thenThrow(new ValidationException("Filter object is required and cannot be empty."));
+    @DisplayName("DELETE /api/listings - Should reject a batch with no ids")
+    void testDeleteListingsBatch_NoIds() throws Exception {
+        when(listingService.deleteListingsBatch(any()))
+                .thenThrow(new ValidationException("At least one listing id is required"));
 
         mockMvc.perform(delete("/api/listings")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"filter\": {}}"))
+                        .content("{\"ids\": []}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"));
+    }
+
+    @Test
+    @DisplayName("DELETE /api/listings - Should pass the named ids through to the service")
+    void testDeleteListingsBatch_Success() throws Exception {
+        when(listingService.deleteListingsBatch(anyList())).thenReturn(new DeleteResponse(2L));
+
+        mockMvc.perform(delete("/api/listings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"ids\": [\"a\", \"b\"]}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.deletedCount").value(2));
+
+        verify(listingService).deleteListingsBatch(List.of("a", "b"));
     }
 
     // ==================== AGGREGATION TESTS ====================

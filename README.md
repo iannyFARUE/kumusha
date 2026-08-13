@@ -215,9 +215,9 @@ All endpoints live under `/api/listings` and return a consistent envelope
 | POST | `/api/listings` | Create a listing |
 | POST | `/api/listings/batch` | Create many (`insertMany`) |
 | PATCH | `/api/listings/{id}` | Partial update (`updateOne` with `$set`) |
-| PATCH | `/api/listings` | Update many (`updateMany`) |
+| PATCH | `/api/listings` | Update many by id (`updateMany`) |
 | DELETE | `/api/listings/{id}` | Delete one |
-| DELETE | `/api/listings` | Delete many (`deleteMany`, empty filters rejected) |
+| DELETE | `/api/listings` | Delete many by id (`deleteMany`) |
 | DELETE | `/api/listings/{id}/find-and-delete` | Atomic `findOneAndDelete` |
 | GET | `/api/listings/aggregations/reportingByReviews` | Recently reviewed stays (`$unwind`/`$group`/`$slice`) |
 | GET | `/api/listings/aggregations/reportingByPropertyType` | Price and rating statistics (`$group`) |
@@ -314,8 +314,12 @@ npm run lint
 - **Embeddings are never returned to the client.** The field is excluded from list queries and
   is not mapped onto the `Listing` entity, so a 2048-dimension vector never travels with a
   listing payload.
-- **Batch deletes require a non-empty filter.** An empty filter is rejected rather than treated
-  as "match everything".
+- **Batch writes name their targets by id.** `PATCH /api/listings` and `DELETE /api/listings`
+  take an `ids` array rather than a MongoDB filter, and the server builds the `_id $in` query
+  itself, so a request cannot widen itself to documents it did not name. A batch is capped at
+  100 listings, ids are trimmed and deduplicated, and an empty list is rejected. The `update`
+  half of a batch PATCH accepts the same whitelisted fields as a single-listing update, so it
+  cannot reach arbitrary stored paths either.
 
 ## License
 

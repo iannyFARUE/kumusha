@@ -3,7 +3,9 @@ package com.kumusha.controller;
 import com.kumusha.config.WriteOperation;
 import com.kumusha.model.Listing;
 import com.kumusha.model.dto.AmenityStatisticsResult;
+import com.kumusha.model.dto.BatchDeleteRequest;
 import com.kumusha.model.dto.BatchInsertResponse;
+import com.kumusha.model.dto.BatchUpdateRequest;
 import com.kumusha.model.dto.BatchUpdateResponse;
 import com.kumusha.model.dto.CreateListingRequest;
 import com.kumusha.model.dto.DeleteResponse;
@@ -25,8 +27,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Map;
-import org.bson.Document;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -283,20 +283,18 @@ public class ListingControllerImpl {
 
     @Operation(
         summary = "Update multiple listings in batch",
-        description = "Update every listing matching the given filter using updateMany. The request body must " +
-                     "contain 'filter' and 'update' objects. Both accept the camelCase field names used " +
-                     "elsewhere in the API and translate them to their stored paths."
+        description = "Update the named listings using updateMany. The request body carries an 'ids' array " +
+                     "naming the listings to change and an 'update' object holding the new values. The update " +
+                     "accepts the same camelCase fields as a single-listing update and no others, and the " +
+                     "server builds the query from the ids, so a request cannot reach listings it did not name."
     )
-    @SuppressWarnings("unchecked")
     @WriteOperation
     @PatchMapping
     public ResponseEntity<SuccessResponse<BatchUpdateResponse>> updateListingsBatch(
-            @Parameter(description = "Request body with 'filter' and 'update' objects", required = true)
-            @RequestBody Map<String, Object> body) {
-        Document filter = new Document((Map<String, Object>) body.get("filter"));
-        Document update = new Document((Map<String, Object>) body.get("update"));
+            @Parameter(description = "Request body with an 'ids' array and an 'update' object", required = true)
+            @RequestBody BatchUpdateRequest body) {
 
-        BatchUpdateResponse result = listingService.updateListingsBatch(filter, update);
+        BatchUpdateResponse result = listingService.updateListingsBatch(body.ids(), body.update());
 
         SuccessResponse<BatchUpdateResponse> response = SuccessResponse.<BatchUpdateResponse>builder()
                 .message("Update operation completed. Matched " + result.matchedCount() +
@@ -348,19 +346,17 @@ public class ListingControllerImpl {
 
     @Operation(
         summary = "Delete multiple listings in batch",
-        description = "Delete every listing matching the given filter using deleteMany. The request body must " +
-                     "contain a non-empty 'filter' object; an empty filter is rejected to prevent accidentally " +
-                     "emptying the collection."
+        description = "Delete the named listings using deleteMany. The request body carries an 'ids' array " +
+                     "naming the listings to remove; the server builds the query from those ids, so a request " +
+                     "cannot delete listings it did not name."
     )
-    @SuppressWarnings("unchecked")
     @WriteOperation
     @DeleteMapping
     public ResponseEntity<SuccessResponse<DeleteResponse>> deleteListingsBatch(
-            @Parameter(description = "Request body with a 'filter' object", required = true)
-            @RequestBody Map<String, Object> body) {
-        Document filter = new Document((Map<String, Object>) body.get("filter"));
+            @Parameter(description = "Request body with an 'ids' array", required = true)
+            @RequestBody BatchDeleteRequest body) {
 
-        DeleteResponse result = listingService.deleteListingsBatch(filter);
+        DeleteResponse result = listingService.deleteListingsBatch(body.ids());
 
         SuccessResponse<DeleteResponse> response = SuccessResponse.<DeleteResponse>builder()
                 .message("Delete operation completed. Removed " + result.deletedCount() + " documents.")

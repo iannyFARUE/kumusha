@@ -101,6 +101,12 @@ public class ListingServiceImpl implements ListingService {
     private static final int EMBEDDING_BATCH_SIZE = 32;
 
     /**
+     * Upper bound on how many listings one batch update or delete may target. Matches the maximum
+     * page size of the read endpoints, so any selection the UI can present in one page fits.
+     */
+    private static final int MAX_BATCH_IDS = 100;
+
+    /**
      * Maps the camelCase property names used by the JSON API onto MongoDB field paths.
      *
      * <p>The API speaks camelCase because Jackson serialises Java property names, while the
@@ -310,20 +316,24 @@ public class ListingServiceImpl implements ListingService {
     }
 
     @Override
-    public BatchUpdateResponse updateListingsBatch(Document filter, Document update) {
-        if (filter == null || update == null) {
-            throw new ValidationException("Both filter and update objects are required");
+    public BatchUpdateResponse updateListingsBatch(List<String> ids, UpdateListingRequest request) {
+        List<String> listingIds = requireListingIds(ids);
+
+        if (request == null) {
+            throw new ValidationException("No update data provided");
         }
 
-        if (update.isEmpty()) {
-            throw new ValidationException("Update object cannot be empty");
+        // Reusing the single-listing update mapping means a batch can only touch the same
+        // whitelisted fields, rather than any path the caller cares to name
+        Map<String, Object> updates = toUpdateMap(request);
+        if (updates.isEmpty()) {
+            throw new ValidationException("No update data provided");
         }
-
-        Query query = buildQueryFromFilter(filter);
 
         Update mongoUpdate = new Update();
-        update.forEach((key, value) -> mongoUpdate.set(toMongoPath(key), value));
+        updates.forEach(mongoUpdate::set);
 
+        Query query = new Query(Criteria.where(Listing.Fields.ID).in(listingIds));
         UpdateResult result = mongoTemplate.updateMulti(query, mongoUpdate, Listing.class);
 
         return new BatchUpdateResponse(result.getMatchedCount(), result.getModifiedCount());
@@ -343,13 +353,10 @@ public class ListingServiceImpl implements ListingService {
     }
 
     @Override
-    public DeleteResponse deleteListingsBatch(Document filter) {
-        if (filter == null || filter.isEmpty()) {
-            throw new ValidationException(
-                "Filter object is required and cannot be empty. This prevents accidental deletion of all documents.");
-        }
+    public DeleteResponse deleteListingsBatch(List<String> ids) {
+        List<String> listingIds = requireListingIds(ids);
 
-        Query query = buildQueryFromFilter(filter);
+        Query query = new Query(Criteria.where(Listing.Fields.ID).in(listingIds));
         DeleteResult result = mongoTemplate.remove(query, Listing.class);
 
         return new DeleteResponse(result.getDeletedCount());
@@ -439,56 +446,6 @@ public class ListingServiceImpl implements ListingService {
         String field = isPresent(sortBy) ? toMongoPath(sortBy.trim()) : Listing.Fields.NAME;
         Sort.Direction direction = "desc".equalsIgnoreCase(sortOrder) ? Sort.Direction.DESC : Sort.Direction.ASC;
         return Sort.by(direction, field);
-    }
-
-    /**
-     * Converts a client-supplied filter document into a Spring Data Query.
-     */
-    private Query buildQueryFromFilter(Document filter) {
-        Query query = new Query();
-        filter.forEach((key, value) -> query.addCriteria(buildCriteriaFromValue(toMongoPath(key), value)));
-        return query;
-    }
-
-    /**
-     * Builds a Spring Data Criteria from a filter key-value pair.
-     * Handles MongoDB query operators such as $in, $gt and $lt.
-     *
-     * @param key The MongoDB field path (already translated)
-     * @param value The filter value (a plain value, or a document of operators)
-     * @return Criteria object for the query
-     */
-    @SuppressWarnings("unchecked")
-    private Criteria buildCriteriaFromValue(String key, Object value) {
-        Criteria criteria = Criteria.where(key);
-
-        // If the value is a document, it may contain MongoDB operators
-        if (value instanceof Map) {
-            Map<String, Object> operatorMap = (Map<String, Object>) value;
-
-            for (Map.Entry<String, Object> operatorEntry : operatorMap.entrySet()) {
-                String operator = operatorEntry.getKey();
-                Object operatorValue = operatorEntry.getValue();
-
-                switch (operator) {
-                    case "$in" -> criteria = criteria.in((List<?>) operatorValue);
-                    case "$nin" -> criteria = criteria.nin((List<?>) operatorValue);
-                    case "$gt" -> criteria = criteria.gt(operatorValue);
-                    case "$gte" -> criteria = criteria.gte(operatorValue);
-                    case "$lt" -> criteria = criteria.lt(operatorValue);
-                    case "$lte" -> criteria = criteria.lte(operatorValue);
-                    case "$ne" -> criteria = criteria.ne(operatorValue);
-                    case "$regex" -> criteria = criteria.regex(operatorValue.toString());
-                    case "$exists" -> criteria = criteria.exists((Boolean) operatorValue);
-                    // For unrecognised operators, fall back to matching the document as a value
-                    default -> criteria = criteria.is(value);
-                }
-            }
-        } else {
-            criteria = criteria.is(value);
-        }
-
-        return criteria;
     }
 
     // ==================== AGGREGATIONS ====================
@@ -1346,6 +1303,39 @@ public class ListingServiceImpl implements ListingService {
             throw new ValidationException("Listing ID is required");
         }
         return id.trim();
+    }
+
+    /**
+     * Validates and normalises the ids targeted by a batch operation.
+     *
+     * <p>Batch update and delete name their targets explicitly instead of accepting a MongoDB
+     * filter. That is what stops a caller from widening a request to documents it never named -
+     * a filter such as {@code {"price": {"$gte": 0}}} would otherwise match the whole collection.
+     * The cap bounds how much damage a single authorised request can do, since the endpoints
+     * themselves carry no authentication.
+     */
+    private List<String> requireListingIds(List<String> ids) {
+        if (ids == null || ids.isEmpty()) {
+            throw new ValidationException("At least one listing id is required");
+        }
+
+        List<String> normalised = ids.stream()
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(id -> !id.isEmpty())
+                .distinct()
+                .toList();
+
+        if (normalised.isEmpty()) {
+            throw new ValidationException("At least one listing id is required");
+        }
+
+        if (normalised.size() > MAX_BATCH_IDS) {
+            throw new ValidationException("A batch may target at most " + MAX_BATCH_IDS
+                    + " listings, but " + normalised.size() + " were provided");
+        }
+
+        return normalised;
     }
 
     private List<String> distinctSortedStrings(String field) {

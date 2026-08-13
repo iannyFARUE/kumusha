@@ -68,7 +68,7 @@ class WriteGuardTest {
     void batchDeleteIsRejected() throws Exception {
         mockMvc.perform(delete("/api/listings")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"filter\":{\"_id\":{\"$in\":[\"" + LISTING_ID + "\"]}}}"))
+                        .content("{\"ids\":[\"" + LISTING_ID + "\"]}"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.error.code").value("WRITE_OPERATIONS_DISABLED"));
 
@@ -80,7 +80,7 @@ class WriteGuardTest {
     void batchUpdateIsRejected() throws Exception {
         mockMvc.perform(patch("/api/listings")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"filter\":{\"_id\":\"" + LISTING_ID + "\"},\"update\":{\"name\":\"x\"}}"))
+                        .content("{\"ids\":[\"" + LISTING_ID + "\"],\"update\":{\"name\":\"x\"}}"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.error.code").value("WRITE_OPERATIONS_DISABLED"));
 

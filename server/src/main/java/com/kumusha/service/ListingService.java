@@ -16,7 +16,6 @@ import com.kumusha.model.dto.PropertyTypeStatisticsResult;
 import com.kumusha.model.dto.UpdateListingRequest;
 import com.kumusha.model.dto.VectorSearchResult;
 import java.util.List;
-import org.bson.Document;
 
 /**
  * Service interface for listing business logic.
@@ -59,11 +58,11 @@ public interface ListingService {
 
     Listing updateListing(String id, UpdateListingRequest request);
 
-    BatchUpdateResponse updateListingsBatch(Document filter, Document update);
+    BatchUpdateResponse updateListingsBatch(List<String> ids, UpdateListingRequest request);
 
     DeleteResponse deleteListing(String id);
 
-    DeleteResponse deleteListingsBatch(Document filter);
+    DeleteResponse deleteListingsBatch(List<String> ids);
 
     Listing findAndDeleteListing(String id);
 

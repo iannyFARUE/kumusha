@@ -360,12 +360,12 @@ export async function deleteListingsBatch(
   listingIds: string[]
 ): Promise<MutationResult & { deletedCount?: number }> {
   try {
-    const filter = { _id: { $in: listingIds } };
-
+    // The API takes the ids themselves rather than a MongoDB filter, so the server decides what
+    // the query matches and a request cannot reach listings it did not name.
     const response = await fetch(`${API_BASE_URL}/api/listings`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ filter }),
+      body: JSON.stringify({ ids: listingIds }),
     });
 
     const result = await response.json();
@@ -389,12 +389,10 @@ export async function updateListingsBatch(
   updateData: Record<string, unknown>
 ): Promise<MutationResult & { matchedCount?: number; modifiedCount?: number }> {
   try {
-    const filter = { _id: { $in: listingIds } };
-
     const response = await fetch(`${API_BASE_URL}/api/listings`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ filter, update: updateData }),
+      body: JSON.stringify({ ids: listingIds, update: updateData }),
     });
 
     const result = await response.json();
