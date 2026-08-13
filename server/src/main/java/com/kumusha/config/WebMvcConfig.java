@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
@@ -17,10 +18,22 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  * <p>This configuration customizes Spring MVC behavior, including:
  * <ul>
  *   <li>Trailing slash handling via a custom filter</li>
+ *   <li>Read-only enforcement for write endpoints via {@link WriteGuardInterceptor}</li>
  * </ul>
  */
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
+
+    private final WriteGuardInterceptor writeGuardInterceptor;
+
+    public WebMvcConfig(WriteGuardInterceptor writeGuardInterceptor) {
+        this.writeGuardInterceptor = writeGuardInterceptor;
+    }
+
+    @Override
+    public void addInterceptors(@NonNull InterceptorRegistry registry) {
+        registry.addInterceptor(writeGuardInterceptor);
+    }
 
     /**
      * Filter to handle trailing slashes in URLs.

@@ -83,6 +83,9 @@ MONGODB_URI="mongodb+srv://<username>:<password>@<cluster>.mongodb.net/sample_ai
 # OPTIONAL: Voyage AI Configuration (required for Vector Search)
 # VOYAGE_API_KEY=your_voyage_api_key
 
+# Write Operations (see "Read-only deployments" below)
+WRITE_ENABLED=true
+
 # Server Configuration
 PORT=3001
 
@@ -91,6 +94,24 @@ CORS_ORIGINS=http://localhost:3000
 ```
 
 Replace `<username>`, `<password>` and `<cluster>` with your actual Atlas credentials.
+
+## Read-only deployments
+
+The create, update, delete and embedding-backfill endpoints have no authentication. Anyone who can
+reach them can modify or delete data, and the backfill endpoint spends money against the Voyage AI
+API. They are therefore **disabled unless `WRITE_ENABLED=true` is set**, and every write returns
+`403` with a `WRITE_OPERATIONS_DISABLED` code while they are off.
+
+The default is off rather than on so that a deployment which never configures the variable ends up
+read-only instead of open to the internet. `server/.env.example` sets it to `true`, so the local
+setup above gives you a fully writable development server.
+
+When hosting this anywhere public, leave `WRITE_ENABLED` unset. Browsing, filtering, aggregation
+reporting, proximity search and both search modes all keep working; only the mutating endpoints are
+closed off.
+
+If you later need writes on a public deployment, this flag is not the mechanism to reach for -
+add real authentication instead.
 
 ### 2. Start the Backend Server
 

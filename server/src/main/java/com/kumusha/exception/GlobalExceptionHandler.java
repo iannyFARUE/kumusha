@@ -42,6 +42,23 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(WriteOperationsDisabledException.class)
+    public ResponseEntity<ErrorResponse> handleWriteOperationsDisabledException(
+            WriteOperationsDisabledException ex, WebRequest request) {
+        // Logged at the point of rejection by WriteGuardInterceptor, which knows the method and
+        // path, so this handler only shapes the response.
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .message(ex.getMessage())
+                .error(ErrorResponse.ErrorDetails.builder()
+                        .message(ex.getMessage())
+                        .code("WRITE_OPERATIONS_DISABLED")
+                        .build())
+                .timestamp(Instant.now().toString())
+                .build();
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+    }
+
     @ExceptionHandler(ValidationException.class)
     public ResponseEntity<ErrorResponse> handleValidationException(
             ValidationException ex, WebRequest request) {

@@ -46,6 +46,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -55,8 +56,13 @@ import org.springframework.test.web.servlet.MockMvc;
  * <p>These tests verify the REST API endpoints by mocking the service layer.
  * They use Spring's MockMvc to exercise HTTP requests and responses, including the
  * status codes and error envelopes produced by GlobalExceptionHandler.
+ *
+ * <p>Writes are enabled here so these tests can exercise the create, update and delete endpoints
+ * on their own terms. The read-only guard that protects those endpoints by default is covered
+ * separately by {@link WriteGuardTest}.
  */
 @WebMvcTest(ListingControllerImpl.class)
+@TestPropertySource(properties = "kumusha.write.enabled=true")
 @DisplayName("ListingController Unit Tests")
 class ListingControllerTest {
 

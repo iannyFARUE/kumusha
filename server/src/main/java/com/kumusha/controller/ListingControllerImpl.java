@@ -1,5 +1,6 @@
 package com.kumusha.controller;
 
+import com.kumusha.config.WriteOperation;
 import com.kumusha.model.Listing;
 import com.kumusha.model.dto.AmenityStatisticsResult;
 import com.kumusha.model.dto.BatchInsertResponse;
@@ -224,6 +225,7 @@ public class ListingControllerImpl {
                      "are optional. Supplying both longitude and latitude builds the GeoJSON point used by " +
                      "proximity search."
     )
+    @WriteOperation
     @PostMapping
     public ResponseEntity<SuccessResponse<Listing>> createListing(
             @Parameter(description = "Listing data to create", required = true)
@@ -242,6 +244,7 @@ public class ListingControllerImpl {
         summary = "Create multiple listings in batch",
         description = "Create multiple listing documents in a single operation using insertMany."
     )
+    @WriteOperation
     @PostMapping("/batch")
     public ResponseEntity<SuccessResponse<BatchInsertResponse>> createListingsBatch(
             @Parameter(description = "List of listings to create", required = true)
@@ -261,6 +264,7 @@ public class ListingControllerImpl {
         description = "Update a single listing document by its id using updateOne with the $set operator. " +
                      "Only the fields present in the request body are modified."
     )
+    @WriteOperation
     @PatchMapping("/{id}")
     public ResponseEntity<SuccessResponse<Listing>> updateListing(
             @Parameter(description = "Listing id to update", required = true)
@@ -284,6 +288,7 @@ public class ListingControllerImpl {
                      "elsewhere in the API and translate them to their stored paths."
     )
     @SuppressWarnings("unchecked")
+    @WriteOperation
     @PatchMapping
     public ResponseEntity<SuccessResponse<BatchUpdateResponse>> updateListingsBatch(
             @Parameter(description = "Request body with 'filter' and 'update' objects", required = true)
@@ -307,6 +312,7 @@ public class ListingControllerImpl {
         description = "Find and delete a listing in a single atomic operation using findOneAndDelete. " +
                      "Returns the deleted listing document."
     )
+    @WriteOperation
     @DeleteMapping("/{id}/find-and-delete")
     public ResponseEntity<SuccessResponse<Listing>> findAndDeleteListing(
             @Parameter(description = "Listing id to find and delete", required = true)
@@ -325,6 +331,7 @@ public class ListingControllerImpl {
         summary = "Delete a listing by id",
         description = "Delete a single listing document by its id using deleteOne."
     )
+    @WriteOperation
     @DeleteMapping("/{id}")
     public ResponseEntity<SuccessResponse<DeleteResponse>> deleteListing(
             @Parameter(description = "Listing id to delete", required = true)
@@ -346,6 +353,7 @@ public class ListingControllerImpl {
                      "emptying the collection."
     )
     @SuppressWarnings("unchecked")
+    @WriteOperation
     @DeleteMapping
     public ResponseEntity<SuccessResponse<DeleteResponse>> deleteListingsBatch(
             @Parameter(description = "Request body with a 'filter' object", required = true)
@@ -582,6 +590,7 @@ public class ListingControllerImpl {
                      "vector and is safe to call repeatedly: already-embedded listings are skipped, and the " +
                      "response reports how many listings remain."
     )
+    @WriteOperation
     @PostMapping("/embeddings/backfill")
     public ResponseEntity<SuccessResponse<EmbeddingBackfillResponse>> backfillEmbeddings(
             @Parameter(description = "Maximum number of listings to embed in this run (default: 50, max: 200)")
