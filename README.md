@@ -189,7 +189,7 @@ Embedding the full collection is roughly 5,500 documents of text.
 ## Features
 
 - **Browse stays:** paginated listings with filters for property type, room type, market,
-  amenity, price range, capacity, review score and superhost status
+  amenity, price range, bedrooms, capacity, review score and superhost status
 - **CRUD operations:** create, read, update and delete listings individually or in batches
   through Spring Data MongoDB
 - **Aggregation reporting:** three pipelines covering embedded review activity, price and rating

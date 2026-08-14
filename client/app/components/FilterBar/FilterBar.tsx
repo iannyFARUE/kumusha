@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { fetchFacets, type ListingFilterParams } from '@/lib/api';
+import { fetchAmenities, fetchFacets, type ListingFilterParams } from '@/lib/api';
 import { ListingFacets } from '@/types/listing';
 import styles from './FilterBar.module.css';
 
@@ -51,18 +51,23 @@ export default function FilterBar({
     roomTypes: [],
     markets: [],
   });
+  const [amenities, setAmenities] = useState<string[]>([]);
   const [isLoadingFacets, setIsLoadingFacets] = useState(true);
 
   const previousInitialFilters = useRef<ListingFilterParams>(initialFilters);
 
-  // One request supplies every dropdown plus the price bounds
+  // The facets call supplies the type/room/market dropdowns plus the price bounds. Amenities come
+  // from their own endpoint because they live in an array field and are far more numerous, so they
+  // are fetched alongside rather than folded into the facets payload.
   useEffect(() => {
-    async function loadFacets() {
+    async function loadFilterOptions() {
       setIsLoadingFacets(true);
-      setFacets(await fetchFacets());
+      const [loadedFacets, loadedAmenities] = await Promise.all([fetchFacets(), fetchAmenities()]);
+      setFacets(loadedFacets);
+      setAmenities(loadedAmenities);
       setIsLoadingFacets(false);
     }
-    loadFacets();
+    loadFilterOptions();
   }, []);
 
   // Keep internal state in step with URL-driven navigation
@@ -202,6 +207,26 @@ export default function FilterBar({
         </div>
 
         <div className={styles.filterGroup}>
+          <label className={styles.filterLabel} htmlFor="amenity">
+            Amenity
+          </label>
+          <select
+            id="amenity"
+            className={styles.filterSelect}
+            value={filters.amenity ?? ''}
+            onChange={(event) => handleFilterChange('amenity', event.target.value)}
+            disabled={isLoading || isLoadingFacets}
+          >
+            <option value="">{isLoadingFacets ? 'Loading...' : 'Any amenity'}</option>
+            {amenities.map((amenity) => (
+              <option key={amenity} value={amenity}>
+                {amenity}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className={styles.filterGroup}>
           <label className={styles.filterLabel} htmlFor="minPrice">
             Nightly price
           </label>
@@ -232,6 +257,24 @@ export default function FilterBar({
               min={0}
             />
           </div>
+        </div>
+
+        <div className={styles.filterGroup}>
+          <label className={styles.filterLabel} htmlFor="minBedrooms">
+            Bedrooms at least
+          </label>
+          <input
+            id="minBedrooms"
+            type="number"
+            className={styles.filterInput}
+            placeholder="e.g. 2"
+            value={filters.minBedrooms ?? ''}
+            onChange={(event) =>
+              handleFilterChange('minBedrooms', event.target.value ? parseInt(event.target.value, 10) : undefined)
+            }
+            disabled={isLoading}
+            min={0}
+          />
         </div>
 
         <div className={styles.filterGroup}>
