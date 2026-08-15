@@ -81,5 +81,13 @@ export async function generateMetadata({ params }: ListingDetailsPageProps): Pro
 export default async function ListingDetailsPage({ params }: ListingDetailsPageProps) {
   const { id } = await params;
 
-  return <ListingDetailClient listingId={id} />;
+  // Next memoises identical fetches within a render, so this reuses the response
+  // generateMetadata already fetched rather than issuing a second request. Handing the result to
+  // the client component lets it render immediately instead of fetching the same listing a third
+  // time after it mounts.
+  const listing = await fetchListingById(id);
+
+  // Keying by id forces a fresh component instance when navigating between two listings, so the
+  // seeded initial state cannot carry over from the previously viewed stay.
+  return <ListingDetailClient key={id} initialListing={listing} />;
 }

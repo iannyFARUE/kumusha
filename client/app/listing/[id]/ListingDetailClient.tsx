@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ActionButtons, EditListingForm, ListingCard } from '../../components';
-import { ErrorDisplay, LoadingSpinner } from '../../components/ui';
+import { ErrorDisplay } from '../../components/ui';
 import { deleteListing, fetchListingById, findSimilarListings, updateListing } from '@/lib/api';
 import { ROUTES } from '@/lib/constants';
 import { formatCapacity, formatDate, formatPrice, formatRating, isValidImageUrl } from '@/lib/utils';
@@ -14,10 +14,13 @@ import styles from './page.module.css';
 
 interface ListingDetailClientProps {
   /**
-   * Resolved by the server component in page.tsx, which needs the id anyway to build the page
-   * metadata. Passing it down avoids unwrapping the params promise a second time here.
+   * The listing as fetched on the server, or null if it could not be loaded.
+   *
+   * <p>Seeding from this is what lets the view render on first paint. The component still owns
+   * the listing afterwards, since editing and deleting have to update it locally, and every
+   * handler identifies it by {@code listing._id} rather than by a separately passed id.
    */
-  listingId: string;
+  initialListing: Listing | null;
 }
 
 /** Review score labels, keyed by the field they read from */
@@ -30,11 +33,10 @@ const SCORE_FIELDS: { key: keyof NonNullable<Listing['reviewScores']>; label: st
   { key: 'value', label: 'Value' },
 ];
 
-export default function ListingDetailClient({ listingId }: ListingDetailClientProps) {
+export default function ListingDetailClient({ initialListing }: ListingDetailClientProps) {
   const router = useRouter();
 
-  const [listing, setListing] = useState<Listing | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [listing, setListing] = useState<Listing | null>(initialListing);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,27 +45,6 @@ export default function ListingDetailClient({ listingId }: ListingDetailClientPr
   const [similarListings, setSimilarListings] = useState<Listing[]>([]);
   const [similarError, setSimilarError] = useState<string | null>(null);
   const [isLoadingSimilar, setIsLoadingSimilar] = useState(false);
-
-  useEffect(() => {
-    if (!listingId) return;
-
-    const loadListing = async () => {
-      setIsLoading(true);
-      setError(null);
-
-      const data = await fetchListingById(listingId);
-
-      if (data) {
-        setListing(data);
-      } else {
-        setError('Stay not found');
-      }
-
-      setIsLoading(false);
-    };
-
-    loadListing();
-  }, [listingId]);
 
   const handleFindSimilar = async () => {
     if (!listing) return;
@@ -130,16 +111,8 @@ export default function ListingDetailClient({ listingId }: ListingDetailClientPr
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className={styles.page}>
-        <main className={styles.main}>
-          <LoadingSpinner message="Loading stay..." />
-        </main>
-      </div>
-    );
-  }
-
+  // No loading branch: the server has already resolved the listing by the time this renders, and
+  // the wait before that is covered by the route's loading.tsx.
   if (!listing) {
     return (
       <div className={styles.page}>
