@@ -1,8 +1,16 @@
+import type { Metadata } from 'next';
 import { ExpandableTable } from '@/components';
 import { fetchAmenityStats, fetchListingsWithReviews, fetchPropertyTypeStats } from '@/lib/api';
 import { formatDate } from '@/lib/utils';
 import { AmenityStats, ListingWithReviews, PropertyTypeStats } from '@/types/aggregations';
 import styles from './aggregations.module.css';
+
+export const metadata: Metadata = {
+  title: 'Insights',
+  description:
+    'Aggregation reports over the sample_airbnb collection: recent review activity, price and ' +
+    'rating statistics per property type, and the most common amenities.',
+};
 
 const RECENT_REVIEWS_LIMIT = 8;
 const PROPERTY_TYPE_LIMIT = 20;

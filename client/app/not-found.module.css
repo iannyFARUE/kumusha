@@ -1,0 +1,65 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: 2rem;
+  text-align: center;
+}
+
+.errorCode {
+  margin: 0;
+  font-size: 4.5rem;
+  font-weight: 700;
+  color: var(--kumusha-ochre);
+  line-height: 1;
+}
+
+.title {
+  margin: 0.5rem 0 0.75rem 0;
+  font-size: 1.6rem;
+  color: var(--kumusha-charcoal);
+}
+
+.description {
+  margin: 0 0 2rem 0;
+  color: var(--color-text-secondary);
+  max-width: 420px;
+  line-height: 1.6;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.primaryLink {
+  padding: 0.8rem 1.75rem;
+  background: var(--kumusha-clay);
+  color: var(--kumusha-cream);
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+  transition: background var(--transition-base);
+}
+
+.primaryLink:hover {
+  background: var(--kumusha-clay-dark);
+  color: var(--kumusha-cream) !important;
+}
+
+.secondaryLink {
+  padding: 0.8rem 1.75rem;
+  border: 1px solid var(--kumusha-clay);
+  color: var(--kumusha-clay);
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+  transition: background var(--transition-base);
+}
+
+.secondaryLink:hover {
+  background: var(--kumusha-clay);
+  color: var(--kumusha-cream) !important;
+}

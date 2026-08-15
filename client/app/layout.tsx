@@ -5,8 +5,16 @@ import styles from './layout.module.css';
 import { APP_CONFIG, ROUTES } from './lib/constants';
 
 export const metadata: Metadata = {
-  title: 'Kumusha - MongoDB stay explorer',
+  // The template lets each page supply just its own name; the home page uses the default
+  title: {
+    default: 'Kumusha - MongoDB stay explorer',
+    template: '%s - Kumusha',
+  },
   description: 'Explore stays from the MongoDB sample_airbnb dataset',
+  openGraph: {
+    siteName: 'Kumusha',
+    type: 'website',
+  },
 };
 
 export default function RootLayout({
