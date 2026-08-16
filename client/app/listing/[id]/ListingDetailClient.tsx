@@ -5,7 +5,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ActionButtons, EditListingForm, ListingCard } from '../../components';
-import { ErrorDisplay } from '../../components/ui';
 import { deleteListing, fetchListingById, findSimilarListings, updateListing } from '@/lib/api';
 import { ROUTES } from '@/lib/constants';
 import { formatCapacity, formatDate, formatPrice, formatRating, isValidImageUrl } from '@/lib/utils';
@@ -14,13 +13,16 @@ import styles from './page.module.css';
 
 interface ListingDetailClientProps {
   /**
-   * The listing as fetched on the server, or null if it could not be loaded.
+   * The listing as resolved on the server.
    *
-   * <p>Seeding from this is what lets the view render on first paint. The component still owns
-   * the listing afterwards, since editing and deleting have to update it locally, and every
-   * handler identifies it by {@code listing._id} rather than by a separately passed id.
+   * <p>Never null: the server component sends a missing listing to not-found.tsx and a failed
+   * lookup to error.tsx, so by the time this renders there is always a listing to show.
+   *
+   * <p>Seeding from it is what lets the view render on first paint. The component still owns the
+   * listing afterwards, since editing and deleting have to update it locally, and every handler
+   * identifies it by {@code listing._id} rather than by a separately passed id.
    */
-  initialListing: Listing | null;
+  initialListing: Listing;
 }
 
 /** Review score labels, keyed by the field they read from */
@@ -36,7 +38,7 @@ const SCORE_FIELDS: { key: keyof NonNullable<Listing['reviewScores']>; label: st
 export default function ListingDetailClient({ initialListing }: ListingDetailClientProps) {
   const router = useRouter();
 
-  const [listing, setListing] = useState<Listing | null>(initialListing);
+  const [listing, setListing] = useState<Listing>(initialListing);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -111,23 +113,9 @@ export default function ListingDetailClient({ initialListing }: ListingDetailCli
     }
   };
 
-  // No loading branch: the server has already resolved the listing by the time this renders, and
-  // the wait before that is covered by the route's loading.tsx.
-  if (!listing) {
-    return (
-      <div className={styles.page}>
-        <main className={styles.main}>
-          <div className={styles.backLink}>
-            <Link href={ROUTES.listings}>&larr; Back to stays</Link>
-          </div>
-          <ErrorDisplay
-            message={error ?? 'Stay not found'}
-            onRetry={() => window.location.reload()}
-          />
-        </main>
-      </div>
-    );
-  }
+  // No loading or empty branch: the server resolves the listing before this renders, routing a
+  // missing one to not-found.tsx and a failed lookup to error.tsx. The wait itself is covered by
+  // the route's loading.tsx.
 
   const pictureUrl = listing.images?.pictureUrl;
   const scores = listing.reviewScores;

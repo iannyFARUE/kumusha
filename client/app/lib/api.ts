@@ -215,29 +215,70 @@ export async function fetchAmenities(): Promise<string[]> {
 }
 
 /**
- * Fetches a single listing by id.
+ * The outcome of looking up a single listing.
+ *
+ * A missing listing and an unreachable backend are different things, and callers that render a
+ * page need to tell them apart: one deserves a 404, the other an error with a retry. Collapsing
+ * both to null would mean reporting "this stay does not exist" during an outage.
  */
-export async function fetchListingById(id: string): Promise<Listing | null> {
-  try {
-    if (!id) {
-      return null;
-    }
+export type ListingFetchResult =
+  | { status: 'found'; listing: Listing }
+  | { status: 'notFound' }
+  | { status: 'error'; message: string };
 
+/**
+ * Fetches a single listing, distinguishing "no such listing" from "could not ask".
+ *
+ * The API answers a missing listing with a 404, so the status code carries the distinction and
+ * nothing has to be inferred from the response body.
+ */
+export async function fetchListingResult(id: string): Promise<ListingFetchResult> {
+  if (!id) {
+    return { status: 'notFound' };
+  }
+
+  try {
     const response = await fetch(`${API_BASE_URL}/api/listings/${encodeURIComponent(id)}`, {
       next: { revalidate: 300 },
     });
 
+    if (response.status === 404) {
+      return { status: 'notFound' };
+    }
+
     if (!response.ok) {
       console.warn(`Failed to fetch listing ${id}: ${response.status}`);
-      return null;
+      return { status: 'error', message: `The server responded with status ${response.status}` };
     }
 
     const result: ApiResponse<Listing> = await response.json();
-    return result.success ? result.data : null;
+
+    if (!result.success || !result.data) {
+      // A non-404 failure envelope means the request was understood but could not be served,
+      // which is a fault rather than an absence
+      return { status: 'error', message: result.message || 'The server returned an error response' };
+    }
+
+    return { status: 'found', listing: result.data };
   } catch (error) {
     console.error('Error fetching listing:', error);
-    return null;
+    return {
+      status: 'error',
+      message: error instanceof Error ? error.message : 'Network error while fetching the listing',
+    };
   }
+}
+
+/**
+ * Fetches a single listing, or null if it is missing or could not be loaded.
+ *
+ * For callers that only act on the happy path and treat every failure the same way. Anything
+ * that renders a page should use {@link fetchListingResult} instead, so that a missing listing
+ * and a failing backend can be told apart.
+ */
+export async function fetchListingById(id: string): Promise<Listing | null> {
+  const result = await fetchListingResult(id);
+  return result.status === 'found' ? result.listing : null;
 }
 
 /**

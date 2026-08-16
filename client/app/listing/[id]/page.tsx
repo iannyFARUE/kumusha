@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
-import { fetchListingById } from '@/lib/api';
+import { notFound } from 'next/navigation';
+import { fetchListingResult } from '@/lib/api';
 import { APP_CONFIG } from '@/lib/constants';
 import { isValidImageUrl } from '@/lib/utils';
 import ListingDetailClient from './ListingDetailClient';
@@ -41,14 +42,23 @@ function toPreviewText(...candidates: (string | undefined)[]): string | undefine
  */
 export async function generateMetadata({ params }: ListingDetailsPageProps): Promise<Metadata> {
   const { id } = await params;
-  const listing = await fetchListingById(id);
+  const result = await fetchListingResult(id);
 
-  if (!listing) {
+  if (result.status === 'notFound') {
     return {
       title: 'Stay not found',
       description: 'This stay could not be found.',
     };
   }
+
+  if (result.status === 'error') {
+    return {
+      title: 'Unable to load stay',
+      description: 'This stay could not be loaded.',
+    };
+  }
+
+  const listing = result.listing;
 
   // The layout's title template appends the site name, but openGraph titles are not templated,
   // so those are built with it spelled out
@@ -85,7 +95,20 @@ export default async function ListingDetailsPage({ params }: ListingDetailsPageP
   // generateMetadata already fetched rather than issuing a second request. Handing the result to
   // the client component lets it render immediately instead of fetching the same listing a third
   // time after it mounts.
-  const listing = await fetchListingById(id);
+  const result = await fetchListingResult(id);
+
+  // A listing that does not exist is a 404; a backend that could not answer is not. Throwing here
+  // hands the failure to error.tsx, which offers a retry, rather than telling the visitor the
+  // stay does not exist because the server happened to be down.
+  if (result.status === 'notFound') {
+    notFound();
+  }
+
+  if (result.status === 'error') {
+    throw new Error(`Could not load listing ${id}: ${result.message}`);
+  }
+
+  const listing = result.listing;
 
   // Keying by id forces a fresh component instance when navigating between two listings, so the
   // seeded initial state cannot carry over from the previously viewed stay.
