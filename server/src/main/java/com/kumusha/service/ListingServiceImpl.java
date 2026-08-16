@@ -23,6 +23,7 @@ import com.kumusha.model.dto.ListingFacetsResult;
 import com.kumusha.model.dto.ListingSearchQuery;
 import com.kumusha.model.dto.ListingSearchRequest;
 import com.kumusha.model.dto.ListingWithReviewsResult;
+import com.kumusha.model.dto.ListingsPageResponse;
 import com.kumusha.model.dto.NearbyListingResult;
 import com.kumusha.model.dto.PropertyTypeStatisticsResult;
 import com.kumusha.model.dto.UpdateListingRequest;
@@ -52,6 +53,7 @@ import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.AggregationExpression;
@@ -155,6 +157,17 @@ public class ListingServiceImpl implements ListingService {
     private final MongoTemplate mongoTemplate;
     private final ObjectMapper objectMapper;
 
+    /**
+     * Shared across every embedding request.
+     *
+     * <p>An HttpClient owns a connection pool and its own executor, so building one per call
+     * discards connection reuse and creates threads that are thrown away. The backfill issues one
+     * request per batch, which is exactly the pattern that benefits from keeping it.
+     */
+    private final HttpClient httpClient = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(20))
+            .build();
+
     @Value("${voyage.api.key:#{null}}")
     private String voyageApiKey;
 
@@ -177,8 +190,12 @@ public class ListingServiceImpl implements ListingService {
     // ==================== READ ====================
 
     @Override
-    public List<Listing> getAllListings(ListingSearchQuery query) {
+    public ListingsPageResponse getAllListings(ListingSearchQuery query) {
         Query mongoQuery = buildQuery(query);
+
+        // Counted while the query still carries only the filters, so the total describes
+        // everything that matches rather than the size of the page about to be returned
+        long totalCount = mongoTemplate.count(mongoQuery, Listing.class);
 
         int limit = Math.clamp(query.limit() != null ? query.limit() : 20, 1, 100);
         int skip = Math.max(query.skip() != null ? query.skip() : 0, 0);
@@ -189,7 +206,12 @@ public class ListingServiceImpl implements ListingService {
         // Never ship the embedding vector to the client: it is thousands of doubles per document
         mongoQuery.fields().exclude(embeddingField);
 
-        return mongoTemplate.find(mongoQuery, Listing.class);
+        return ListingsPageResponse.builder()
+                .listings(mongoTemplate.find(mongoQuery, Listing.class))
+                .totalCount(totalCount)
+                .limit(limit)
+                .skip(skip)
+                .build();
     }
 
     @Override
@@ -948,12 +970,21 @@ public class ListingServiceImpl implements ListingService {
 
                 List<List<Double>> vectors = generateEmbeddings(batchTexts, "document");
 
+                // Each embedding goes to a different document, so the writes cannot be merged
+                // into one update. Sending them as a bulk operation still collapses the batch
+                // into a single round trip instead of one per listing. Unordered because the
+                // writes are independent and no listing's embedding depends on another's.
+                BulkOperations bulkOps =
+                        mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED, COLLECTION);
+
                 for (int i = 0; i < batchIds.size(); i++) {
                     Query byId = new Query(Criteria.where(Listing.Fields.ID).is(batchIds.get(i)));
                     Update update = new Update().set(embeddingField, vectors.get(i));
-                    mongoTemplate.updateFirst(byId, update, COLLECTION);
-                    embedded++;
+                    bulkOps.updateOne(byId, update);
                 }
+
+                bulkOps.execute();
+                embedded += batchIds.size();
             }
         } catch (VoyageAuthException | VoyageAPIException e) {
             throw e;
@@ -1045,10 +1076,6 @@ public class ListingServiceImpl implements ListingService {
         body.put("output_dimension", embeddingDimensions);
         body.put("input_type", inputType);
 
-        HttpClient client = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(20))
-                .build();
-
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("https://api.voyageai.com/v1/embeddings"))
                 .header("Content-Type", "application/json")
@@ -1057,7 +1084,7 @@ public class ListingServiceImpl implements ListingService {
                 .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(body)))
                 .build();
 
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
         if (response.statusCode() != 200) {
             if (response.statusCode() == 401) {
