@@ -31,6 +31,7 @@ import com.kumusha.model.dto.ListingFacetsResult;
 import com.kumusha.model.dto.ListingSearchQuery;
 import com.kumusha.model.dto.ListingSearchRequest;
 import com.kumusha.model.dto.ListingWithReviewsResult;
+import com.kumusha.model.dto.ListingsPageResponse;
 import com.kumusha.model.dto.NearbyListingResult;
 import com.kumusha.model.dto.PropertyTypeStatisticsResult;
 import com.kumusha.model.dto.UpdateListingRequest;
@@ -114,21 +115,38 @@ class ListingControllerTest {
     @Test
     @DisplayName("GET /api/listings - Should return list of listings")
     void testGetAllListings_Success() throws Exception {
-        when(listingService.getAllListings(any(ListingSearchQuery.class))).thenReturn(List.of(testListing));
+        when(listingService.getAllListings(any(ListingSearchQuery.class)))
+                .thenReturn(ListingsPageResponse.builder()
+                        .listings(List.of(testListing))
+                        .totalCount(1)
+                        .limit(20)
+                        .skip(0)
+                        .build());
 
         mockMvc.perform(get("/api/listings"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data").isArray())
-                .andExpect(jsonPath("$.data", hasSize(1)))
-                .andExpect(jsonPath("$.data[0].name").value("Ribeira Charming Duplex"))
-                .andExpect(jsonPath("$.data[0]._id").value(testId));
+                .andExpect(jsonPath("$.data.listings").isArray())
+                .andExpect(jsonPath("$.data.listings", hasSize(1)))
+                .andExpect(jsonPath("$.data.listings[0].name").value("Ribeira Charming Duplex"))
+                .andExpect(jsonPath("$.data.listings[0]._id").value(testId))
+                // The count is what lets the client show a total and a page count, so it has to
+                // survive serialisation rather than merely exist on the DTO
+                .andExpect(jsonPath("$.data.totalCount").value(1))
+                .andExpect(jsonPath("$.data.limit").value(20))
+                .andExpect(jsonPath("$.data.skip").value(0));
     }
 
     @Test
     @DisplayName("GET /api/listings - Should handle query parameters")
     void testGetAllListings_WithQueryParams() throws Exception {
-        when(listingService.getAllListings(any(ListingSearchQuery.class))).thenReturn(List.of(testListing));
+        when(listingService.getAllListings(any(ListingSearchQuery.class)))
+                .thenReturn(ListingsPageResponse.builder()
+                        .listings(List.of(testListing))
+                        .totalCount(1)
+                        .limit(20)
+                        .skip(0)
+                        .build());
 
         mockMvc.perform(get("/api/listings")
                         .param("q", "duplex")
@@ -142,7 +160,7 @@ class ListingControllerTest {
                         .param("skip", "0"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data").isArray());
+                .andExpect(jsonPath("$.data.listings").isArray());
     }
 
     // ==================== FACET TESTS ====================

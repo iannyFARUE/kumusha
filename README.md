@@ -314,6 +314,10 @@ npm run lint
 - **Embeddings are never returned to the client.** The field is excluded from list queries and
   is not mapped onto the `Listing` entity, so a 2048-dimension vector never travels with a
   listing payload.
+- **`GET /api/listings` returns a page, not a bare array.** The response carries `listings`
+  alongside `totalCount`, `limit` and `skip`, so the client can report how many stays match and
+  how many pages there are instead of over-fetching one extra row to guess whether another page
+  exists.
 - **Batch writes name their targets by id.** `PATCH /api/listings` and `DELETE /api/listings`
   take an `ids` array rather than a MongoDB filter, and the server builds the `_id $in` query
   itself, so a request cannot widen itself to documents it did not name. A batch is capped at

@@ -44,6 +44,7 @@ export default function ListingsClient() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [hasPrevPage, setHasPrevPage] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
   const [isCreating, setIsCreating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -169,6 +170,7 @@ export default function ListingsClient() {
         setListings(result.listings);
         setHasNextPage(result.hasNextPage);
         setHasPrevPage(result.hasPrevPage);
+        setTotalCount(result.totalCount);
         setError(null);
       } catch {
         if (!isCurrent) return;
@@ -176,6 +178,7 @@ export default function ListingsClient() {
         setListings([]);
         setHasNextPage(false);
         setHasPrevPage(false);
+        setTotalCount(0);
         setError('Failed to load stays. Make sure the server is running on port 3001.');
       }
 
@@ -637,6 +640,7 @@ export default function ListingsClient() {
                     hasNextPage={hasNextPage}
                     hasPrevPage={hasPrevPage}
                     limit={limit}
+                    totalCount={totalCount}
                   />
                 )}
               </>

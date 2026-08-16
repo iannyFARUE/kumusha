@@ -135,6 +135,19 @@ export interface ListingFacets {
 }
 
 /**
+ * A page of listings together with how many matched in total.
+ *
+ * The total is what lets the UI report a result count and a page count, neither of which can be
+ * derived from a page of rows on its own.
+ */
+export interface ListingsPage {
+  listings: Listing[];
+  totalCount: number;
+  limit: number;
+  skip: number;
+}
+
+/**
  * A listing returned by the proximity endpoint, with its distance from the query point.
  */
 export interface NearbyListing {

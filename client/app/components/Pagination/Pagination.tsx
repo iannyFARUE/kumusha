@@ -10,6 +10,9 @@ interface PaginationProps {
   hasNextPage: boolean;
   hasPrevPage: boolean;
   limit: number;
+
+  /** How many listings match in total, across every page. */
+  totalCount: number;
 }
 
 export default function Pagination({
@@ -17,6 +20,7 @@ export default function Pagination({
   hasNextPage,
   hasPrevPage,
   limit,
+  totalCount,
 }: PaginationProps) {
   const searchParams = useSearchParams();
 
@@ -28,6 +32,8 @@ export default function Pagination({
     }
     return `${ROUTES.listings}?${params.toString()}`;
   };
+
+  const totalPages = limit > 0 ? Math.ceil(totalCount / limit) : 0;
 
   // Nothing to navigate to, so render nothing
   if (!hasNextPage && !hasPrevPage) {
@@ -49,7 +55,10 @@ export default function Pagination({
           <span className={`${styles.pageButton} ${styles.disabled}`}>&larr; Previous</span>
         )}
 
-        <div className={styles.pageInfo}>Page {currentPage}</div>
+        <div className={styles.pageInfo}>
+          Page {currentPage}
+          {totalPages > 0 && ` of ${totalPages.toLocaleString()}`}
+        </div>
 
         {hasNextPage ? (
           <Link
@@ -64,7 +73,10 @@ export default function Pagination({
         )}
       </div>
 
-      <div className={styles.additionalInfo}>{limit} stays per page</div>
+      <div className={styles.additionalInfo}>
+        {totalCount.toLocaleString()} {totalCount === 1 ? 'stay' : 'stays'} match &middot; {limit}{' '}
+        per page
+      </div>
     </nav>
   );
 }

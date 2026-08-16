@@ -3,6 +3,7 @@ import {
   EmbeddingBackfillResult,
   Listing,
   ListingFacets,
+  ListingsPage,
   NearbyListing,
 } from '@/types/listing';
 import { AmenityStats, ListingWithReviews, PropertyTypeStats } from '@/types/aggregations';
@@ -116,12 +117,18 @@ export async function fetchListings(
   limit: number = 20,
   skip: number = 0,
   filters?: ListingFilterParams
-): Promise<{ listings: Listing[]; hasNextPage: boolean; hasPrevPage: boolean }> {
+): Promise<{
+  listings: Listing[];
+  totalCount: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+}> {
   try {
     const queryParams = new URLSearchParams();
 
-    const requestLimit = Math.min(limit + 1, 100);
-    queryParams.append('limit', requestLimit.toString());
+    // The endpoint reports how many listings match, so the page no longer has to be over-fetched
+    // by one row to discover whether another page exists
+    queryParams.append('limit', Math.min(limit, 100).toString());
     queryParams.append('skip', skip.toString());
 
     if (filters) {
@@ -147,16 +154,20 @@ export async function fetchListings(
       throw new Error(`Failed to fetch listings: ${response.status}`);
     }
 
-    const result: ApiResponse<Listing[]> = await response.json();
+    const result: ApiResponse<ListingsPage> = await response.json();
 
     if (!result.success) {
       throw new Error('API returned error response');
     }
 
-    const hasNextPage = result.data.length > limit;
-    const listings = hasNextPage ? result.data.slice(0, limit) : result.data;
+    const page = result.data;
 
-    return { listings, hasNextPage, hasPrevPage: skip > 0 };
+    return {
+      listings: page.listings ?? [],
+      totalCount: page.totalCount ?? 0,
+      hasNextPage: skip + (page.listings?.length ?? 0) < (page.totalCount ?? 0),
+      hasPrevPage: skip > 0,
+    };
   } catch (error) {
     console.error('Error fetching listings:', error);
 
@@ -165,7 +176,7 @@ export async function fetchListings(
       throw error;
     }
 
-    return { listings: [], hasNextPage: false, hasPrevPage: false };
+    return { listings: [], totalCount: 0, hasNextPage: false, hasPrevPage: false };
   }
 }
 

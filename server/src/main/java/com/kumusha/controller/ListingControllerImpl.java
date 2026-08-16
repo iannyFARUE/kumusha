@@ -14,6 +14,7 @@ import com.kumusha.model.dto.ListingFacetsResult;
 import com.kumusha.model.dto.ListingSearchQuery;
 import com.kumusha.model.dto.ListingSearchRequest;
 import com.kumusha.model.dto.ListingWithReviewsResult;
+import com.kumusha.model.dto.ListingsPageResponse;
 import com.kumusha.model.dto.NearbyListingResult;
 import com.kumusha.model.dto.PropertyTypeStatisticsResult;
 import com.kumusha.model.dto.SearchListingsResponse;
@@ -85,7 +86,7 @@ public class ListingControllerImpl {
                      "description."
     )
     @GetMapping
-    public ResponseEntity<SuccessResponse<List<Listing>>> getAllListings(
+    public ResponseEntity<SuccessResponse<ListingsPageResponse>> getAllListings(
             @Parameter(description = "Text search query (searches name, summary, description)")
             @RequestParam(required = false) String q,
             @Parameter(description = "Filter by property type, e.g. 'Apartment'")
@@ -138,11 +139,11 @@ public class ListingControllerImpl {
                 .sortOrder(sortOrder)
                 .build();
 
-        List<Listing> listings = listingService.getAllListings(query);
+        ListingsPageResponse page = listingService.getAllListings(query);
 
-        SuccessResponse<List<Listing>> response = SuccessResponse.<List<Listing>>builder()
-                .message("Found " + listings.size() + " listings")
-                .data(listings)
+        SuccessResponse<ListingsPageResponse> response = SuccessResponse.<ListingsPageResponse>builder()
+                .message("Returned " + page.listings().size() + " of " + page.totalCount() + " listings")
+                .data(page)
                 .build();
 
         return ResponseEntity.ok(response);

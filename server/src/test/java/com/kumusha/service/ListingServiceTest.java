@@ -23,6 +23,7 @@ import com.kumusha.model.dto.CreateListingRequest;
 import com.kumusha.model.dto.DeleteResponse;
 import com.kumusha.model.dto.ListingSearchQuery;
 import com.kumusha.model.dto.ListingSearchRequest;
+import com.kumusha.model.dto.ListingsPageResponse;
 import com.kumusha.model.dto.PropertyTypeStatisticsResult;
 import com.kumusha.model.dto.UpdateListingRequest;
 import com.kumusha.repository.ListingRepository;
@@ -114,13 +115,50 @@ class ListingServiceTest {
     @DisplayName("Should get all listings with default pagination")
     void testGetAllListings_WithDefaults() {
         when(mongoTemplate.find(any(Query.class), eq(Listing.class))).thenReturn(List.of(testListing));
+        when(mongoTemplate.count(any(Query.class), eq(Listing.class))).thenReturn(57L);
 
-        List<Listing> result = listingService.getAllListings(ListingSearchQuery.builder().build());
+        ListingsPageResponse result = listingService.getAllListings(ListingSearchQuery.builder().build());
 
         assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals(testListing.getName(), result.get(0).getName());
+        assertEquals(1, result.listings().size());
+        assertEquals(testListing.getName(), result.listings().get(0).getName());
+
+        // The total describes the whole match, not the page, which is the entire point of
+        // returning it alongside the rows
+        assertEquals(57L, result.totalCount());
+        assertEquals(20, result.limit());
+        assertEquals(0, result.skip());
+
         verify(mongoTemplate).find(any(Query.class), eq(Listing.class));
+    }
+
+    @Test
+    @DisplayName("Should count the filters without the paging applied")
+    void testGetAllListings_CountsBeforePaging() {
+        // The service counts and then pages the same Query instance, so an ArgumentCaptor would
+        // hand back the object after paging was applied. The state has to be read during the call.
+        int[] pagingAtCountTime = new int[2];
+
+        when(mongoTemplate.find(any(Query.class), eq(Listing.class))).thenReturn(List.of(testListing));
+        when(mongoTemplate.count(any(Query.class), eq(Listing.class))).thenAnswer(invocation -> {
+            Query counted = invocation.getArgument(0);
+            pagingAtCountTime[0] = counted.getLimit() > Integer.MAX_VALUE
+                    ? Integer.MAX_VALUE
+                    : (int) counted.getLimit();
+            pagingAtCountTime[1] = (int) counted.getSkip();
+            return 999L;
+        });
+
+        ListingsPageResponse result =
+                listingService.getAllListings(ListingSearchQuery.builder().limit(5).skip(40).build());
+
+        // A count that inherited skip and limit would cap out at the page size and make the
+        // reported total meaningless
+        assertEquals(0, pagingAtCountTime[0], "count query must not carry a limit");
+        assertEquals(0, pagingAtCountTime[1], "count query must not carry a skip");
+
+        // The total is the whole match, not the five rows the page asked for
+        assertEquals(999L, result.totalCount());
     }
 
     @Test

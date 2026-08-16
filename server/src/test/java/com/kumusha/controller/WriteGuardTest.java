@@ -14,6 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.kumusha.model.Listing;
 import com.kumusha.model.dto.ListingSearchQuery;
+import com.kumusha.model.dto.ListingsPageResponse;
 import com.kumusha.service.ListingService;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -111,7 +112,12 @@ class WriteGuardTest {
     @DisplayName("Reads still work, so a read-only deployment still serves the browsing UI")
     void readsStillWork() throws Exception {
         when(listingService.getAllListings(any(ListingSearchQuery.class)))
-                .thenReturn(List.of(Listing.builder().id(LISTING_ID).name("Sea view").build()));
+                .thenReturn(ListingsPageResponse.builder()
+                        .listings(List.of(Listing.builder().id(LISTING_ID).name("Sea view").build()))
+                        .totalCount(1)
+                        .limit(20)
+                        .skip(0)
+                        .build());
 
         mockMvc.perform(get("/api/listings"))
                 .andExpect(status().isOk())

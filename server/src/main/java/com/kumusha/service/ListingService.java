@@ -11,6 +11,7 @@ import com.kumusha.model.dto.ListingFacetsResult;
 import com.kumusha.model.dto.ListingSearchQuery;
 import com.kumusha.model.dto.ListingSearchRequest;
 import com.kumusha.model.dto.ListingWithReviewsResult;
+import com.kumusha.model.dto.ListingsPageResponse;
 import com.kumusha.model.dto.NearbyListingResult;
 import com.kumusha.model.dto.PropertyTypeStatisticsResult;
 import com.kumusha.model.dto.UpdateListingRequest;
@@ -22,7 +23,7 @@ import java.util.List;
  */
 public interface ListingService {
 
-    List<Listing> getAllListings(ListingSearchQuery query);
+    ListingsPageResponse getAllListings(ListingSearchQuery query);
 
     /**
      * Gets all distinct property type values from the listings collection.
