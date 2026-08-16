@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# A new push to the same branch makes the previous run irrelevant
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  server:
+    name: Server (Java 21)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Run tests
+        working-directory: server
+        # The suite is unit tests and @WebMvcTest slices, so it needs no MongoDB deployment.
+        # MONGODB_URI is still supplied because application.properties requires the placeholder
+        # to resolve, and an unreachable address is fine when nothing opens a connection.
+        env:
+          MONGODB_URI: mongodb://localhost:27017/sample_airbnb
+        run: ./mvnw -B --no-transfer-progress test
+
+      - name: Publish test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: server/target/surefire-reports/
+          if-no-files-found: ignore
+
+  client:
+    name: Client (Node 22)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      # ci rather than install, so the run uses the committed lockfile exactly
+      - name: Install dependencies
+        working-directory: client
+        run: npm ci
+
+      - name: Lint
+        working-directory: client
+        run: npm run lint
+
+      - name: Build
+        working-directory: client
+        # A production build fails when NEXT_PUBLIC_API_URL is unset, which is deliberate: it
+        # stops a deployable bundle being produced with the localhost fallback baked in. CI only
+        # needs the build to typecheck and compile, so any well-formed URL satisfies it.
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:3001
+        run: npm run build
