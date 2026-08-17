@@ -163,6 +163,18 @@ class ListingControllerTest {
                 .andExpect(jsonPath("$.data.listings").isArray());
     }
 
+    @Test
+    @DisplayName("An unmatched path should be a 404, not a server error")
+    void testUnknownEndpoint_ReturnsNotFound() throws Exception {
+        mockMvc.perform(get("/api/listings/no/such/endpoint"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("ENDPOINT_NOT_FOUND"))
+                // The framework's own message names internal resource handling, which should not
+                // reach a caller
+                .andExpect(jsonPath("$.error.message").value("The requested endpoint does not exist"));
+    }
+
     // ==================== FACET TESTS ====================
 
     @Test

@@ -13,6 +13,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
  * Global exception handler for the application.
@@ -35,6 +36,30 @@ public class GlobalExceptionHandler {
                 .error(ErrorResponse.ErrorDetails.builder()
                         .message(ex.getMessage())
                         .code("RESOURCE_NOT_FOUND")
+                        .build())
+                .timestamp(Instant.now().toString())
+                .build();
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+    }
+
+    /**
+     * Handles a request for a path that matches no handler.
+     *
+     * <p>Without this, the catch-all below turns every mistyped URL into a 500 carrying Spring's
+     * internal "No static resource ..." text. That reads as a server fault to anything watching
+     * error rates, when the request was simply for something that does not exist.
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNoResourceFound(
+            NoResourceFoundException ex, WebRequest request) {
+        logger.warn("No handler for {}", ex.getResourcePath());
+
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .message("The requested endpoint does not exist")
+                .error(ErrorResponse.ErrorDetails.builder()
+                        .message("The requested endpoint does not exist")
+                        .code("ENDPOINT_NOT_FOUND")
                         .build())
                 .timestamp(Instant.now().toString())
                 .build();
