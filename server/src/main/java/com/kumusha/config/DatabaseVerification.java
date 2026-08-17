@@ -45,6 +45,18 @@ public class DatabaseVerification {
     private static final String LOCATION_INDEX_NAME = "location_2dsphere_index";
     private static final String PROPERTY_TYPE_INDEX_NAME = "property_type_index";
     private static final String LAST_REVIEW_INDEX_NAME = "last_review_index";
+    private static final String NAME_INDEX_NAME = "name_index";
+    private static final String PRICE_INDEX_NAME = "price_index";
+    private static final String REVIEW_SCORE_INDEX_NAME = "review_score_index";
+    private static final String NUMBER_OF_REVIEWS_INDEX_NAME = "number_of_reviews_index";
+    private static final String ACCOMMODATES_INDEX_NAME = "accommodates_index";
+    private static final String ROOM_TYPE_INDEX_NAME = "room_type_index";
+    private static final String MARKET_INDEX_NAME = "market_index";
+    private static final String COUNTRY_INDEX_NAME = "country_index";
+    private static final String AMENITIES_INDEX_NAME = "amenities_index";
+    private static final String BEDROOMS_INDEX_NAME = "bedrooms_index";
+    private static final String MARKET_NAME_INDEX_NAME = "market_name_index";
+    private static final String PROPERTY_TYPE_NAME_INDEX_NAME = "property_type_name_index";
     private static final String MONGODB_SEARCH_INDEX_NAME = "listingSearchIndex";
     private static final String VECTOR_INDEX_NAME = "vector_index";
 
@@ -182,11 +194,53 @@ public class DatabaseVerification {
     }
 
     /**
-     * Creates indexes that support the filter and aggregation endpoints.
+     * Creates indexes that support the filter, sort and aggregation endpoints.
+     *
+     * <p>The listings endpoint always sorts, defaulting to {@code name} ascending, and it now
+     * counts the matching documents as well as fetching a page of them. Without an index behind
+     * the sort key MongoDB has to read the whole collection and order it in memory, and these
+     * documents are unusually expensive to hold there because each one embeds its full reviews
+     * array. Every field the API can sort by therefore gets an index, as does every field it can
+     * filter by.
+     *
+     * <p>Single-field indexes serve either direction, so ascending is enough for the sort keys
+     * even though the API allows descending. The two compound indexes cover the combination the
+     * UI produces most often: a dropdown filter applied together with the default sort. In a
+     * compound index the equality field has to come first and the sort field second, otherwise
+     * the index orders by the wrong key and the sort falls back to memory.
      */
     private void createSupportingIndexes(MongoCollection<Document> listings) {
         createSimpleIndex(listings, PROPERTY_TYPE_INDEX_NAME, Indexes.ascending(Listing.Fields.PROPERTY_TYPE));
         createSimpleIndex(listings, LAST_REVIEW_INDEX_NAME, Indexes.descending(Listing.Fields.LAST_REVIEW));
+
+        // Sort keys. NAME matters most: it is the default, so it applies to every request that
+        // does not name another one.
+        createSimpleIndex(listings, NAME_INDEX_NAME, Indexes.ascending(Listing.Fields.NAME));
+        createSimpleIndex(listings, PRICE_INDEX_NAME, Indexes.ascending(Listing.Fields.PRICE));
+        createSimpleIndex(listings, REVIEW_SCORE_INDEX_NAME,
+                Indexes.ascending(Listing.Fields.REVIEW_SCORES_RATING));
+        createSimpleIndex(listings, NUMBER_OF_REVIEWS_INDEX_NAME,
+                Indexes.ascending(Listing.Fields.NUMBER_OF_REVIEWS));
+        createSimpleIndex(listings, ACCOMMODATES_INDEX_NAME,
+                Indexes.ascending(Listing.Fields.ACCOMMODATES));
+
+        // Filter keys. AMENITIES is an array, so this is a multikey index with one entry per
+        // amenity per listing, which is what makes the amenity filter selective.
+        createSimpleIndex(listings, ROOM_TYPE_INDEX_NAME, Indexes.ascending(Listing.Fields.ROOM_TYPE));
+        createSimpleIndex(listings, MARKET_INDEX_NAME, Indexes.ascending(Listing.Fields.ADDRESS_MARKET));
+        createSimpleIndex(listings, COUNTRY_INDEX_NAME, Indexes.ascending(Listing.Fields.ADDRESS_COUNTRY));
+        createSimpleIndex(listings, AMENITIES_INDEX_NAME, Indexes.ascending(Listing.Fields.AMENITIES));
+        createSimpleIndex(listings, BEDROOMS_INDEX_NAME, Indexes.ascending(Listing.Fields.BEDROOMS));
+
+        // Filter plus default sort, the shape the filter bar produces on nearly every use
+        createSimpleIndex(listings, MARKET_NAME_INDEX_NAME,
+                Indexes.compoundIndex(
+                        Indexes.ascending(Listing.Fields.ADDRESS_MARKET),
+                        Indexes.ascending(Listing.Fields.NAME)));
+        createSimpleIndex(listings, PROPERTY_TYPE_NAME_INDEX_NAME,
+                Indexes.compoundIndex(
+                        Indexes.ascending(Listing.Fields.PROPERTY_TYPE),
+                        Indexes.ascending(Listing.Fields.NAME)));
     }
 
     private void createSimpleIndex(MongoCollection<Document> listings, String name, org.bson.conversions.Bson keys) {
