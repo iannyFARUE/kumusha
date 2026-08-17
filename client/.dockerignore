@@ -1,0 +1,15 @@
+# Installed and built inside the image
+node_modules/
+.next/
+out/
+build/
+
+# Local environment and state
+.env
+.env*.local
+*.tsbuildinfo
+npm-debug.log*
+
+# IDE
+.idea/
+.vscode/

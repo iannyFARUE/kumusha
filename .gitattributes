@@ -1,0 +1,15 @@
+# Shell scripts must keep LF endings even when checked out on Windows. A CRLF here breaks the
+# shebang for anything that runs them on Linux - the kernel looks for an interpreter named
+# "/bin/sh\r" and reports "not found" - which is what a Docker build does with the working tree.
+*.sh text eol=lf
+mvnw text eol=lf
+
+# Their Windows counterparts need the opposite
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Never touched by line-ending conversion
+*.jar binary
+*.png binary
+*.jpg binary
+*.ico binary

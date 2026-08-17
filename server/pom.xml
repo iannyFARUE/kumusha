@@ -45,6 +45,12 @@
             <artifactId>spring-boot-starter-data-mongodb</artifactId>
         </dependency>
 
+        <!-- Actuator - provides the health endpoint container platforms probe -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
         <!-- Spring Dotenv - Load .env files -->
         <dependency>
             <groupId>me.paulschwarz</groupId>

@@ -1,0 +1,15 @@
+# Build output and local state: the image builds from source inside the container
+target/
+.cache/
+.env
+*.log
+
+# The wrapper jar is fetched during the build rather than shipped
+.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+.settings/
+.classpath
+.project

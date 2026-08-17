@@ -13,14 +13,47 @@ to a domain where listings carry coordinates, embedded reviews and rich descript
 ```
 ├── README.md
 ├── check-requirements.sh   # Pre-flight checks for Java, Node and configuration
+├── docker-compose.yml      # MongoDB, API and frontend together
 ├── client/                 # Next.js frontend (TypeScript)
-│   └── .env.example
+│   ├── .env.example
+│   └── Dockerfile
 └── server/                 # Java Spring Boot backend
     ├── src/
     ├── pom.xml
     ├── .env.example
+    ├── Dockerfile
     └── mvnw
 ```
+
+## Run it with Docker
+
+The quickest way to see it working, and the only path that does not need Java, Maven and Node
+installed locally:
+
+```bash
+docker compose up --build
+```
+
+That starts MongoDB, the API on port 3001 and the frontend on port 3000, bringing each up only
+once the one below it reports healthy.
+
+The database starts **empty**, so the listings pages will have nothing to show until you load the
+`sample_airbnb` dataset into it. To use an Atlas cluster that already has the data instead:
+
+```bash
+MONGODB_URI="mongodb+srv://<user>:<password>@<cluster>.mongodb.net/sample_airbnb" \
+  docker compose up --build
+```
+
+Two things are worth knowing about the compose setup:
+
+- `NEXT_PUBLIC_API_URL` is a **build argument**, not a runtime variable, because Next inlines it
+  into the browser bundle when the image is built. It has to be an address the browser can reach,
+  which is why it defaults to `http://localhost:3001` rather than the compose service name.
+- `WRITE_ENABLED` defaults to `true` here, since compose is the local development path. Leave it
+  unset anywhere reachable from the internet - see [Read-only deployments](#read-only-deployments).
+
+Otherwise, follow the manual setup below.
 
 ## What the dataset gives you, and what it does not
 
@@ -129,6 +162,12 @@ The server starts on `http://localhost:3001`. Verify it is running:
 
 - API root: http://localhost:3001/
 - API documentation (Swagger UI): http://localhost:3001/swagger-ui.html
+- Health: http://localhost:3001/actuator/health, with `/readiness` and `/liveness` beneath it
+
+Readiness reports DOWN while MongoDB is unreachable, so a platform probing it will hold traffic
+back from an instance that is running but cannot serve. Liveness only reports whether the process
+itself is healthy, which is the one to restart on. Health is the only actuator endpoint exposed,
+and it reports no component details, because nothing here authenticates a caller.
 
 On startup the application verifies the database and creates the indexes it needs: a text index
 on name/summary/description, a **2dsphere index on `address.location`** (without which the

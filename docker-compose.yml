@@ -1,0 +1,64 @@
+# Brings up MongoDB, the API and the frontend together.
+#
+#   docker compose up --build
+#
+# The database starts empty. Load the sample_airbnb dataset into it, or point MONGODB_URI at an
+# Atlas cluster that already has it:
+#
+#   MONGODB_URI="mongodb+srv://..." docker compose up --build
+#
+# Vector search additionally needs VOYAGE_API_KEY, and its index is an Atlas feature that the
+# local mongo service cannot provide.
+
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ ping: 1 }).ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  server:
+    build:
+      context: ./server
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      # Defaults to the mongo service; override to use Atlas instead
+      MONGODB_URI: ${MONGODB_URI:-mongodb://mongo:27017/sample_airbnb}
+      PORT: "3001"
+      # The browser calls the API from the host, so the allowed origin is the host address
+      CORS_ORIGINS: http://localhost:3000
+      # Compose is the local development path, which is writable. Leave this unset when deploying
+      # anywhere reachable from the internet: the write endpoints have no authentication.
+      WRITE_ENABLED: ${WRITE_ENABLED:-true}
+      VOYAGE_API_KEY: ${VOYAGE_API_KEY:-}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  client:
+    build:
+      context: ./client
+      args:
+        # Baked into the browser bundle at build time, so it must be the address the browser can
+        # reach - the published host port, not the compose service name
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001}
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      server:
+        condition: service_healthy
+
+volumes:
+  mongo-data:
