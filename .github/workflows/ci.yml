@@ -74,3 +74,19 @@ jobs:
         env:
           NEXT_PUBLIC_API_URL: http://localhost:3001
         run: npm run build
+
+  docker:
+    name: Container images
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      # The compose file and both Dockerfiles are otherwise never exercised, so a broken build
+      # would only surface when someone tried to deploy. This is also the guard against the class
+      # of failure that first broke these images: a shell script checked out with CRLF endings.
+      - name: Validate the compose file
+        run: docker compose config --quiet
+
+      - name: Build images
+        run: docker compose build

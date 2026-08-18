@@ -306,6 +306,15 @@ cd server
 ./mvnw test
 ```
 
+The suite has two halves. Most of it mocks `MongoTemplate` and covers the service and controller
+logic in isolation. `ListingIntegrationTest` instead runs against a real MongoDB started by
+Testcontainers, which is what actually executes the aggregation pipelines, the `$geoNear` search
+and the index definitions - none of which a mocked template can verify.
+
+That half needs Docker. Without it those tests skip rather than fail, so `./mvnw test` still
+passes on a machine that has no Docker installed; you just get less coverage. MongoDB Search and
+Vector Search stay mocked either way, since both are Atlas features a container cannot provide.
+
 The suite covers the controller layer with `@WebMvcTest` and the service layer with Mockito,
 including the camelCase-to-snake_case field translation and the numeric coercion applied to
 `Decimal128` prices.

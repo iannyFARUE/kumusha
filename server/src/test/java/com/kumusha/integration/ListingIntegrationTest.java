@@ -27,9 +27,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -58,8 +59,20 @@ class ListingIntegrationTest {
     private static final String COLLECTION = "listingsAndReviews";
 
     @Container
-    @ServiceConnection
     static MongoDBContainer mongo = new MongoDBContainer("mongo:7");
+
+    /**
+     * Points the application at the container.
+     *
+     * <p>{@code @ServiceConnection} would be the shorter route, but it works through Boot's
+     * MongoDB auto-configuration, and this application replaces that with its own
+     * {@code MongoConfig} extending {@code AbstractMongoClientConfiguration}. That reads
+     * {@code spring.data.mongodb.uri} directly, so the property is what has to be set.
+     */
+    @DynamicPropertySource
+    static void mongoProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.data.mongodb.uri", mongo::getConnectionString);
+    }
 
     @Autowired
     private ListingService listingService;
