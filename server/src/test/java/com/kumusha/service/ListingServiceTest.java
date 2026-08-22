@@ -7,7 +7,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -29,10 +31,17 @@ import com.kumusha.model.dto.UpdateListingRequest;
 import com.kumusha.repository.ListingRepository;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpHeaders;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.IntStream;
@@ -680,5 +689,117 @@ class ListingServiceTest {
 
         assertThrows(ServiceUnavailableException.class,
                 () -> listingService.backfillDescriptionEmbeddings(50));
+    }
+
+    // ==================== VOYAGE RETRY TESTS ====================
+
+    /** A 429 with no Retry-After header, which is what the backoff path has to handle. */
+    @SuppressWarnings("unchecked")
+    private static HttpResponse<String> rateLimited() {
+        HttpResponse<String> response = mock(HttpResponse.class);
+        when(response.statusCode()).thenReturn(429);
+        when(response.headers()).thenReturn(HttpHeaders.of(Map.of(), (name, value) -> true));
+        return response;
+    }
+
+    private static HttpRequest anyRequest() {
+        return HttpRequest.newBuilder().uri(URI.create("https://example.com/embeddings")).build();
+    }
+
+    @Test
+    @DisplayName("Should retry a rate-limited Voyage request and return the eventual success")
+    void testSendWithRetry_RetriesOnRateLimit() throws Exception {
+        HttpClient http = mock(HttpClient.class);
+        ReflectionTestUtils.setField(listingService, "httpClient", http);
+        // Zero so the test does not sit through the real backoff
+        ReflectionTestUtils.setField(listingService, "retryInitialDelayMs", 0L);
+
+        @SuppressWarnings("unchecked")
+        HttpResponse<String> ok = mock(HttpResponse.class);
+        when(ok.statusCode()).thenReturn(200);
+
+        // Built before the stubbing call: rateLimited() stubs its own mock, and Mockito rejects
+        // that happening inside an open when(...) chain
+        HttpResponse<String> firstLimit = rateLimited();
+        HttpResponse<String> secondLimit = rateLimited();
+
+        when(http.<String>send(any(HttpRequest.class), any()))
+                .thenReturn(firstLimit, secondLimit, ok);
+
+        HttpResponse<String> result = listingService.sendWithRetry(anyRequest());
+
+        assertEquals(200, result.statusCode());
+        verify(http, times(3)).send(any(HttpRequest.class), any());
+    }
+
+    @Test
+    @DisplayName("Should give up after the attempt limit and hand the last response back")
+    void testSendWithRetry_StopsAfterAttemptLimit() throws Exception {
+        HttpClient http = mock(HttpClient.class);
+        ReflectionTestUtils.setField(listingService, "httpClient", http);
+        ReflectionTestUtils.setField(listingService, "retryInitialDelayMs", 0L);
+
+        HttpResponse<String> limited = rateLimited();
+        when(http.<String>send(any(HttpRequest.class), any())).thenReturn(limited);
+
+        HttpResponse<String> result = listingService.sendWithRetry(anyRequest());
+
+        // Returned rather than thrown, so the caller still raises VoyageAPIException carrying the
+        // real status rather than a generic retry failure
+        assertEquals(429, result.statusCode());
+        verify(http, times(4)).send(any(HttpRequest.class), any());
+    }
+
+    @Test
+    @DisplayName("Should not retry a failure that will not change, such as a bad API key")
+    void testSendWithRetry_DoesNotRetryUnauthorised() throws Exception {
+        HttpClient http = mock(HttpClient.class);
+        ReflectionTestUtils.setField(listingService, "httpClient", http);
+        ReflectionTestUtils.setField(listingService, "retryInitialDelayMs", 0L);
+
+        @SuppressWarnings("unchecked")
+        HttpResponse<String> unauthorised = mock(HttpResponse.class);
+        when(unauthorised.statusCode()).thenReturn(401);
+
+        when(http.<String>send(any(HttpRequest.class), any())).thenReturn(unauthorised);
+
+        HttpResponse<String> result = listingService.sendWithRetry(anyRequest());
+
+        assertEquals(401, result.statusCode());
+        verify(http, times(1)).send(any(HttpRequest.class), any());
+    }
+
+    @Test
+    @DisplayName("Should retry a dropped connection as readily as a rate limit")
+    void testSendWithRetry_RetriesNetworkFailure() throws Exception {
+        HttpClient http = mock(HttpClient.class);
+        ReflectionTestUtils.setField(listingService, "httpClient", http);
+        ReflectionTestUtils.setField(listingService, "retryInitialDelayMs", 0L);
+
+        @SuppressWarnings("unchecked")
+        HttpResponse<String> ok = mock(HttpResponse.class);
+        when(ok.statusCode()).thenReturn(200);
+
+        when(http.<String>send(any(HttpRequest.class), any()))
+                .thenThrow(new IOException("connection reset"))
+                .thenReturn(ok);
+
+        HttpResponse<String> result = listingService.sendWithRetry(anyRequest());
+
+        assertEquals(200, result.statusCode());
+        verify(http, times(2)).send(any(HttpRequest.class), any());
+    }
+
+    @Test
+    @DisplayName("A network failure that never clears should surface rather than be swallowed")
+    void testSendWithRetry_ThrowsWhenNetworkNeverRecovers() throws Exception {
+        HttpClient http = mock(HttpClient.class);
+        ReflectionTestUtils.setField(listingService, "httpClient", http);
+        ReflectionTestUtils.setField(listingService, "retryInitialDelayMs", 0L);
+
+        when(http.<String>send(any(HttpRequest.class), any())).thenThrow(new IOException("connection reset"));
+
+        assertThrows(IOException.class, () -> listingService.sendWithRetry(anyRequest()));
+        verify(http, times(4)).send(any(HttpRequest.class), any());
     }
 }

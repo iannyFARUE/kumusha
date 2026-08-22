@@ -51,6 +51,8 @@ import java.util.stream.Collectors;
 import org.bson.Document;
 import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.BulkOperations;
@@ -107,6 +109,14 @@ public class ListingServiceImpl implements ListingService {
      * page size of the read endpoints, so any selection the UI can present in one page fits.
      */
     private static final int MAX_BATCH_IDS = 100;
+
+    private static final Logger logger = LoggerFactory.getLogger(ListingServiceImpl.class);
+
+    /** Total attempts per Voyage request, so three retries after the first try. */
+    private static final int MAX_EMBEDDING_ATTEMPTS = 4;
+
+    /** However long the server asks us to wait, we stop waiting after this. */
+    private static final long MAX_RETRY_DELAY_MS = 30_000;
 
     /**
      * Maps the camelCase property names used by the JSON API onto MongoDB field paths.
@@ -170,6 +180,13 @@ public class ListingServiceImpl implements ListingService {
 
     @Value("${voyage.api.key:#{null}}")
     private String voyageApiKey;
+
+    /**
+     * Base delay before the first retry, doubling on each subsequent one. Configurable mainly so
+     * tests can set it to zero rather than sleeping through the backoff.
+     */
+    @Value("${kumusha.embedding.retry.initial-delay-ms:1000}")
+    private long retryInitialDelayMs;
 
     @Value("${kumusha.embedding.field}")
     private String embeddingField;
@@ -1084,7 +1101,7 @@ public class ListingServiceImpl implements ListingService {
                 .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(body)))
                 .build();
 
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        HttpResponse<String> response = sendWithRetry(request);
 
         if (response.statusCode() != 200) {
             if (response.statusCode() == 401) {
@@ -1133,6 +1150,87 @@ public class ListingServiceImpl implements ListingService {
         }
 
         return embeddings;
+    }
+
+    /**
+     * Sends a Voyage request, retrying the failures that are worth retrying.
+     *
+     * <p>The backfill issues one request per batch in a loop against a rate-limited API, so a 429
+     * partway through a run is expected rather than exceptional. Without this, a single one of
+     * them ends the run, leaving the listings embedded so far in place but recording nothing about
+     * where it stopped.
+     *
+     * <p>Package-private so the retry behaviour can be tested directly, rather than by driving a
+     * whole embedding call through a mocked ObjectMapper.
+     *
+     * @return the response from the first attempt that was not worth retrying, which on the final
+     *     attempt is whatever came back, so a persistent failure still reaches the caller intact
+     */
+    HttpResponse<String> sendWithRetry(HttpRequest request) throws IOException, InterruptedException {
+        IOException lastNetworkFailure = null;
+
+        for (int attempt = 1; attempt <= MAX_EMBEDDING_ATTEMPTS; attempt++) {
+            try {
+                HttpResponse<String> response =
+                        httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+                if (attempt == MAX_EMBEDDING_ATTEMPTS || !isRetryable(response.statusCode())) {
+                    return response;
+                }
+
+                logger.warn("Voyage AI returned {} on attempt {} of {}; retrying",
+                        response.statusCode(), attempt, MAX_EMBEDDING_ATTEMPTS);
+
+                Thread.sleep(retryDelayMillis(attempt,
+                        response.headers().firstValue("Retry-After").orElse(null)));
+
+            } catch (IOException e) {
+                // A dropped connection is as transient as a 503, and the backfill sends many
+                // requests in a row, so it gets the same treatment
+                lastNetworkFailure = e;
+
+                if (attempt == MAX_EMBEDDING_ATTEMPTS) {
+                    throw e;
+                }
+
+                logger.warn("Voyage AI request failed on attempt {} of {}: {}; retrying",
+                        attempt, MAX_EMBEDDING_ATTEMPTS, e.getMessage());
+
+                Thread.sleep(retryDelayMillis(attempt, null));
+            }
+        }
+
+        throw lastNetworkFailure != null ? lastNetworkFailure
+                : new IOException("Voyage AI request failed after " + MAX_EMBEDDING_ATTEMPTS + " attempts");
+    }
+
+    /**
+     * Rate limiting and gateway errors are worth another attempt. A 400 or a 401 will fail the
+     * same way however long we wait, so retrying them only delays the error.
+     */
+    private static boolean isRetryable(int statusCode) {
+        return statusCode == 429
+                || statusCode == 500
+                || statusCode == 502
+                || statusCode == 503
+                || statusCode == 504;
+    }
+
+    /**
+     * Exponential backoff, unless the server said how long to wait.
+     */
+    private long retryDelayMillis(int attempt, String retryAfterHeader) {
+        if (retryAfterHeader != null) {
+            try {
+                long seconds = Long.parseLong(retryAfterHeader.trim());
+                if (seconds >= 0) {
+                    return Math.min(seconds * 1000, MAX_RETRY_DELAY_MS);
+                }
+            } catch (NumberFormatException ignored) {
+                // Retry-After may also carry an HTTP date, which is not worth parsing here
+            }
+        }
+        return Math.min(retryInitialDelayMs * (1L << (attempt - 1)), MAX_RETRY_DELAY_MS);
     }
 
     // ==================== MAPPING HELPERS ====================
